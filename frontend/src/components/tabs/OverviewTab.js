@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '../../utils/api';
-import { Package, ArrowRightLeft, Wrench, CalendarCheck, AlertTriangle, Plus, Clipboard, UserMinus } from 'lucide-react';
+import { Package, ArrowRightLeft, Wrench, CalendarCheck, AlertTriangle, Plus, Clipboard, UserMinus, TrendingUp } from 'lucide-react';
 import KPICard from '../shared/KPICard';
 import AssetTagChip from '../shared/AssetTagChip';
 import StatusBadge from '../shared/StatusBadge';
@@ -10,6 +10,11 @@ import Button from '../shared/Button';
 import Modal from '../shared/Modal';
 import FormField from '../shared/FormField';
 import toast from 'react-hot-toast';
+import DashboardCalendar from '../shared/DashboardCalendar';
+import {
+  ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
+  Line, Area
+} from 'recharts';
 
 export default function OverviewTab({ user, setActiveTab }) {
   const [kpis, setKpis] = useState(null);
@@ -17,6 +22,15 @@ export default function OverviewTab({ user, setActiveTab }) {
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  // Interactive Dashboard Data
+  const [allAllocations, setAllAllocations] = useState([]);
+  const [allBookings, setAllBookings] = useState([]);
+  const [allMaintenance, setAllMaintenance] = useState([]);
+  const [analyticsData, setAnalyticsData] = useState(null);
+  
+  // Graph Selector State
+  const [selectedGraphs, setSelectedGraphs] = useState(['allocations', 'bookings', 'maintenance']);
+
   // Maintenance Request Modal State
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [maintenanceAssetId, setMaintenanceAssetId] = useState('');
@@ -37,16 +51,40 @@ export default function OverviewTab({ user, setActiveTab }) {
       const kpiRes = await api.get('/analytics/kpis');
       setKpis(kpiRes.data.data.kpis);
 
-      // Fetch active allocations to check for overdue returns
-      const allocRes = await api.get('/allocations?status=active');
-      const allAllocations = allocRes.data.data.allocations || [];
+      // Fetch active allocations to check for overdue returns & calendar
+      const allocRes = await api.get('/allocations');
+      const allAllocData = allocRes.data.data.allocations || [];
+      setAllAllocations(allAllocData);
+
       const now = new Date();
-      const overdue = allAllocations.filter(a => a.expectedReturnDate && new Date(a.expectedReturnDate) < now);
+      const activeAllocs = allAllocData.filter(a => a.status === 'active');
+      const overdue = activeAllocs.filter(a => a.expectedReturnDate && new Date(a.expectedReturnDate) < now);
       setOverdueAllocations(overdue);
+
+      // Fetch bookings & maintenance for calendar
+      const bookingsRes = await api.get('/bookings');
+      setAllBookings(bookingsRes.data.data.bookings || []);
+
+      const maintRes = await api.get('/maintenance');
+      setAllMaintenance(maintRes.data.data.requests || []);
 
       // Fetch assets list for maintenance select dropdown
       const assetsRes = await api.get('/assets');
       setAssets(assetsRes.data.data.assets || []);
+
+      // Fetch Analytics Data for charts
+      const [utilRes, maintFreqRes, deptRes] = await Promise.all([
+        api.get('/analytics/utilization'),
+        api.get('/analytics/maintenance-frequency'),
+        api.get('/analytics/department-summary')
+      ]);
+
+      setAnalyticsData({
+        utilization: utilRes.data.data.utilization || [],
+        maintenanceFreq: maintFreqRes.data.data.frequency || [],
+        deptSummary: deptRes.data.data.summary || []
+      });
+
     } catch (err) {
       console.error('Failed to load dashboard data', err);
       toast.error('Failed to load dashboard statistics');
@@ -113,6 +151,53 @@ export default function OverviewTab({ user, setActiveTab }) {
     return diffDays;
   };
 
+  const handleGraphToggle = (graphId) => {
+    setSelectedGraphs(prev => {
+      if (prev.includes(graphId)) {
+        return prev.filter(id => id !== graphId);
+      }
+      return [...prev, graphId];
+    });
+  };
+
+  // Build a single unified dataset for all assets to plot on the SAME axis
+  const unifiedDataMap = {};
+  
+  if (analyticsData?.utilization) {
+    analyticsData.utilization.forEach(a => {
+      unifiedDataMap[a.assetTag] = {
+        name: a.name,
+        tag: a.assetTag,
+        allocations: a._count.allocations,
+        bookings: a._count.bookings,
+        maintenance: 0,
+        total: a._count.allocations + a._count.bookings
+      };
+    });
+  }
+
+  if (analyticsData?.maintenanceFreq) {
+    analyticsData.maintenanceFreq.forEach(cat => {
+      cat.assets.forEach(asset => {
+        if (!unifiedDataMap[asset.assetTag]) {
+          unifiedDataMap[asset.assetTag] = {
+            name: asset.name,
+            tag: asset.assetTag,
+            allocations: 0,
+            bookings: 0,
+            maintenance: 0,
+            total: 0
+          };
+        }
+        unifiedDataMap[asset.assetTag].maintenance = asset._count.maintenanceRequests;
+      });
+    });
+  }
+
+  const unifiedChartData = Object.values(unifiedDataMap)
+    .sort((a, b) => b.total + b.maintenance - (a.total + a.maintenance))
+    .slice(0, 12); // Top 12 most active assets
+
   if (loading) {
     return (
       <div className="flex flex-col gap-6 animate-pulse">
@@ -134,10 +219,13 @@ export default function OverviewTab({ user, setActiveTab }) {
   return (
     <div className="flex flex-col gap-8">
       {/* Header */}
-      <div className="flex flex-col gap-1 border-b border-hairline pb-4">
-        <h2 className="text-2xl font-bold font-display text-ink uppercase tracking-wider">Dashboard</h2>
+      <div className="flex flex-col gap-2 border-b border-hairline pb-6">
+        <h2 className="text-sm font-bold font-display text-steel uppercase tracking-wider">Dashboard Overview</h2>
+        <h1 className="text-4xl font-extrabold text-ink tracking-tight">
+          Welcome back, <span className="text-accent">{user.name}</span>!
+        </h1>
         <p className="text-sm text-steel">
-          Welcome back, <span className="font-semibold text-ink">{user.name}</span>. Scoped view: <span className="capitalize font-semibold text-accent">{user.role.replace('_', ' ')}</span>
+          You are currently in the <span className="capitalize font-semibold text-ink bg-surface px-2 py-0.5 rounded border border-hairline">{user.role.replace('_', ' ')}</span> view.
         </p>
       </div>
 
@@ -246,6 +334,155 @@ export default function OverviewTab({ user, setActiveTab }) {
           </div>
         </div>
       )}
+
+      {/* Calendar and Charts Interactive Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        
+        {/* Left Column: Interactive Custom Calendar */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 text-ink">
+            <CalendarCheck className="w-5 h-5 text-accent" />
+            <h3 className="text-lg font-bold font-display uppercase tracking-wider">Operational Calendar</h3>
+          </div>
+          <p className="text-xs text-steel -mt-3 mb-2">View upcoming returns, bookings, and repair timelines.</p>
+          <div className="flex-1 min-h-[500px]">
+            <DashboardCalendar 
+              allocations={allAllocations}
+              bookings={allBookings}
+              maintenance={allMaintenance}
+              onEventClick={(tab) => setActiveTab(tab)}
+            />
+          </div>
+        </div>
+
+        {/* Right Column: Interactive Multi-Select Charts */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between border-b border-hairline pb-2">
+            <div className="flex items-center gap-2 text-ink">
+              <TrendingUp className="w-5 h-5 text-accent" />
+              <h3 className="text-lg font-bold font-display uppercase tracking-wider">Unified Asset Analytics</h3>
+            </div>
+          </div>
+          
+          <div className="bg-white border border-hairline p-5 rounded-lg shadow-sm flex flex-col gap-6 flex-1 min-h-[500px]">
+            {/* Multi-Select Graph Toggle - Now beautiful pills */}
+            <div className="flex flex-wrap gap-3">
+              <button 
+                onClick={() => handleGraphToggle('allocations')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${
+                  selectedGraphs.includes('allocations') 
+                    ? 'bg-accent/10 border-accent/30 text-accent-ink' 
+                    : 'bg-surface border-hairline text-steel hover:bg-surface/80'
+                }`}
+              >
+                <div className={`w-2 h-2 rounded-full ${selectedGraphs.includes('allocations') ? 'bg-accent' : 'bg-steel/40'}`} />
+                Allocations
+              </button>
+
+              <button 
+                onClick={() => handleGraphToggle('bookings')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${
+                  selectedGraphs.includes('bookings') 
+                    ? 'bg-status-available/10 border-status-available/30 text-status-available' 
+                    : 'bg-surface border-hairline text-steel hover:bg-surface/80'
+                }`}
+              >
+                <div className={`w-2 h-2 rounded-full ${selectedGraphs.includes('bookings') ? 'bg-status-available' : 'bg-steel/40'}`} />
+                Bookings
+              </button>
+
+              <button 
+                onClick={() => handleGraphToggle('maintenance')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${
+                  selectedGraphs.includes('maintenance') 
+                    ? 'bg-status-lost/10 border-status-lost/30 text-status-lost' 
+                    : 'bg-surface border-hairline text-steel hover:bg-surface/80'
+                }`}
+              >
+                <div className={`w-2 h-2 rounded-full ${selectedGraphs.includes('maintenance') ? 'bg-status-lost' : 'bg-steel/40'}`} />
+                Repair Tickets
+              </button>
+            </div>
+
+            <div className="flex-1 w-full min-h-[400px]">
+              {selectedGraphs.length === 0 ? (
+                <div className="flex items-center justify-center h-full bg-surface/50 rounded-lg border border-dashed border-hairline">
+                  <span className="text-sm text-steel font-semibold">Select at least one metric to plot</span>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={unifiedChartData} margin={{ top: 20, right: 10, left: -20, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    
+                    {/* Primary X Axis: Asset Tags */}
+                    <XAxis 
+                      dataKey="tag" 
+                      tick={{fontSize: 10, fill: '#64748B', fontWeight: 600}} 
+                      tickLine={false} 
+                      axisLine={false}
+                      dy={10}
+                    />
+                    
+                    {/* Primary Y Axis for interactions (Bars) */}
+                    <YAxis 
+                      yAxisId="left" 
+                      tick={{fontSize: 10, fill: '#64748B'}} 
+                      tickLine={false} 
+                      axisLine={false} 
+                    />
+                    
+                    {/* Secondary Y Axis for maintenance (Line) */}
+                    {selectedGraphs.includes('maintenance') && (
+                      <YAxis 
+                        yAxisId="right" 
+                        orientation="right" 
+                        tick={{fontSize: 10, fill: '#EF4444'}} 
+                        tickLine={false} 
+                        axisLine={false} 
+                      />
+                    )}
+
+                    <RechartsTooltip 
+                      cursor={{ fill: '#F1F5F9', opacity: 0.5 }}
+                      contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      labelStyle={{ fontWeight: 'bold', color: '#0F172A', marginBottom: '4px' }}
+                      itemStyle={{ fontSize: '12px', fontWeight: 600, padding: '2px 0' }}
+                    />
+                    
+                    <Legend 
+                      verticalAlign="top" 
+                      height={36} 
+                      iconType="circle" 
+                      wrapperStyle={{ fontSize: '11px', fontWeight: 600 }} 
+                    />
+
+                    {selectedGraphs.includes('allocations') && (
+                      <Bar yAxisId="left" dataKey="allocations" name="Total Allocations" fill="#0066FF" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    )}
+                    
+                    {selectedGraphs.includes('bookings') && (
+                      <Bar yAxisId="left" dataKey="bookings" name="Total Bookings" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    )}
+                    
+                    {selectedGraphs.includes('maintenance') && (
+                      <Line 
+                        yAxisId="right" 
+                        type="monotone" 
+                        dataKey="maintenance" 
+                        name="Repair Tickets" 
+                        stroke="#EF4444" 
+                        strokeWidth={3} 
+                        dot={{ r: 4, fill: '#EF4444', strokeWidth: 2, stroke: '#fff' }} 
+                        activeDot={{ r: 6, strokeWidth: 0 }} 
+                      />
+                    )}
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Quick Actions Panel */}
       <div className="bg-white border border-hairline rounded-lg p-6 shadow-sm flex flex-col gap-4">

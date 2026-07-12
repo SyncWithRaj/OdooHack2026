@@ -26,7 +26,7 @@ import ActivityLogsTab from '../../components/tabs/ActivityLogsTab';
 import ProfileTab from '../../components/tabs/ProfileTab';
 
 export default function DashboardPage() {
-  const { user, loading, logout, updateUser } = useAuth();
+  const { user, loading: authLoading, logout, updateUser } = useAuth();
   const router = useRouter();
   
   const [activeTab, setActiveTab] = useState('overview');
@@ -37,12 +37,11 @@ export default function DashboardPage() {
   const notifRef = useRef(null);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
 
-  // Fetch notifications
   const fetchNotifications = async () => {
     try {
       const res = await api.get('/notifications');
@@ -56,13 +55,13 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       fetchNotifications();
-      // Poll every 30 seconds for notifications
       const interval = setInterval(fetchNotifications, 30000);
       return () => clearInterval(interval);
     }
   }, [user]);
 
-  // Close notifications panel on click outside
+
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (notifRef.current && !notifRef.current.contains(event.target)) {
@@ -73,7 +72,7 @@ export default function DashboardPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (loading || !user) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface">
         <div className="flex flex-col items-center gap-4">
@@ -103,7 +102,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Render the correct tab content
   const renderTabContent = () => {
     const props = { 
       user, 
@@ -146,11 +144,9 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen bg-surface overflow-hidden">
-      {/* Sidebar controls the activeTab state */}
       <Sidebar user={user} role={user.role} activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <div className="flex-1 flex flex-col ml-64">
-        {/* Top Header */}
         <header className="bg-white border-b border-hairline h-16 flex items-center justify-between px-8 shrink-0 relative z-40">
           <div className="flex-1">
             <h1 className="text-lg font-bold text-ink uppercase tracking-wider">
@@ -158,7 +154,6 @@ export default function DashboardPage() {
             </h1>
           </div>
           <div className="flex items-center gap-6">
-            {/* Notifications Dropdown */}
             <div className="relative" ref={notifRef}>
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
@@ -175,19 +170,14 @@ export default function DashboardPage() {
                   <div className="px-4 py-2 border-b border-hairline flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-steel">Notifications</span>
                     {unreadCount > 0 && (
-                      <button 
-                        onClick={markAllRead} 
-                        className="text-xs font-semibold text-accent hover:underline bg-transparent border-none cursor-pointer"
-                      >
+                      <button onClick={markAllRead} className="text-xs font-semibold text-accent hover:underline bg-transparent border-none cursor-pointer">
                         Mark all read
                       </button>
                     )}
                   </div>
                   <div className="max-h-64 overflow-y-auto divide-y divide-hairline">
                     {notifications.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-xs text-steel">
-                        No notifications.
-                      </div>
+                      <div className="px-4 py-6 text-center text-xs text-steel">No notifications.</div>
                     ) : (
                       notifications.map((notif) => (
                         <div 
