@@ -5,6 +5,10 @@ import AppError from '../../utils/AppError.js';
  * Create a new department — sets manager/parent links.
  */
 export const createDepartment = async ({ name, code, parentId, departmentHeadId }) => {
+  // Validate code uniqueness
+  const existingCode = await prisma.department.findUnique({ where: { code } });
+  if (existingCode) throw new AppError('Department code already exists.', 409);
+
   // Validate parent exists if provided
   if (parentId) {
     const parent = await prisma.department.findUnique({ where: { id: parentId } });
@@ -51,6 +55,12 @@ export const getDepartments = async () => {
 export const updateDepartment = async (id, data) => {
   const department = await prisma.department.findUnique({ where: { id } });
   if (!department) throw new AppError('Department not found.', 404);
+
+  // Validate code uniqueness if code is being updated
+  if (data.code && data.code !== department.code) {
+    const existingCode = await prisma.department.findUnique({ where: { code: data.code } });
+    if (existingCode) throw new AppError('Department code already exists.', 409);
+  }
 
   const updated = await prisma.department.update({
     where: { id },
