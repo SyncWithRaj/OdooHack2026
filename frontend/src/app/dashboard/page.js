@@ -13,6 +13,7 @@ import Sidebar from '../../components/layout/Sidebar';
 // Import Tabs
 import OverviewTab from '../../components/tabs/OverviewTab';
 import AssetsTab from '../../components/tabs/AssetsTab';
+import AssetRequestsTab from '../../components/tabs/AssetRequestsTab';
 import AllocationsTab from '../../components/tabs/AllocationsTab';
 import MaintenanceTab from '../../components/tabs/MaintenanceTab';
 import EmployeesTab from '../../components/tabs/EmployeesTab';
@@ -114,6 +115,8 @@ export default function DashboardPage() {
         return <OverviewTab {...props} />;
       case 'assets':
         return <AssetsTab {...props} />;
+      case 'asset-requests':
+        return <AssetRequestsTab {...props} />;
       case 'allocations':
         return <AllocationsTab {...props} />;
       case 'transfers':

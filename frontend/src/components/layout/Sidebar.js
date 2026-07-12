@@ -16,6 +16,7 @@ const getNavigation = (role) => {
   const routes = [
     { id: 'overview', name: 'Overview', icon: LayoutDashboard, roles: ['admin', 'asset_manager', 'department_head', 'employee'] },
     { id: 'assets', name: 'Assets', icon: Package, roles: ['admin', 'asset_manager', 'department_head', 'employee'] },
+    { id: 'asset-requests', name: 'Asset Requests', icon: Package, roles: ['admin', 'asset_manager', 'department_head', 'employee'] },
     { id: 'allocations', name: 'Allocations', icon: ArrowRightLeft, roles: ['admin', 'asset_manager', 'department_head', 'employee'] },
     { id: 'transfers', name: 'Transfers', icon: ArrowRightLeft, roles: ['admin', 'asset_manager', 'department_head', 'employee'] },
     { id: 'maintenance', name: 'Maintenance', icon: Wrench, roles: ['admin', 'asset_manager', 'department_head', 'employee'] },
