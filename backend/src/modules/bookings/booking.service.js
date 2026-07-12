@@ -90,19 +90,103 @@ export const createBooking = async (data, userId) => {
     },
   });
 
-  // Create confirmation notification
+  // Create notification for manager
+  // In a real system, you might notify all asset managers. Here we just return it.
+  
+  return booking;
+};
+
+/**
+ * Approve a pending booking
+ */
+export const approveBooking = async (bookingId, userId) => {
+  const booking = await prisma.resourceBooking.findUnique({
+    where: { id: bookingId },
+    include: { asset: true },
+  });
+
+  if (!booking) throw new AppError('Booking not found.', 404);
+  if (booking.status !== 'pending') {
+    throw new AppError(`Cannot approve a booking with status: ${booking.status}.`, 400);
+  }
+
+  // Check for conflicts again before approving
+  const overlapping = await prisma.resourceBooking.findFirst({
+    where: {
+      assetId: booking.assetId,
+      status: { in: ['upcoming', 'ongoing'] },
+      startTime: { lt: booking.endTime },
+      endTime: { gt: booking.startTime },
+    },
+  });
+
+  if (overlapping) {
+    throw new AppError(
+      `Cannot approve. Slot conflicts with an existing confirmed booking (${overlapping.startTime.toISOString()} - ${overlapping.endTime.toISOString()}).`,
+      409
+    );
+  }
+
+  const updated = await prisma.resourceBooking.update({
+    where: { id: bookingId },
+    data: { status: 'upcoming' },
+    include: {
+      asset: { select: { id: true, name: true } },
+      user: { select: { id: true, name: true } },
+    },
+  });
+
+  // Notify user of approval
   await prisma.notification.create({
     data: {
-      userId,
-      title: 'Booking Confirmed',
-      message: `Your booking for "${asset.name}" from ${startTime.toISOString()} to ${endTime.toISOString()} is confirmed.`,
-      type: 'BOOKING_CONFIRMED',
-      referenceId: booking.id,
+      userId: booking.userId,
+      title: 'Booking Approved',
+      message: `Your booking for "${updated.asset.name}" from ${booking.startTime.toISOString()} to ${booking.endTime.toISOString()} has been approved.`,
+      type: 'BOOKING_APPROVED',
+      referenceId: bookingId,
       referenceType: 'booking',
     },
   });
 
-  return booking;
+  return updated;
+};
+
+/**
+ * Reject a pending booking
+ */
+export const rejectBooking = async (bookingId, userId) => {
+  const booking = await prisma.resourceBooking.findUnique({
+    where: { id: bookingId },
+    include: { asset: true },
+  });
+
+  if (!booking) throw new AppError('Booking not found.', 404);
+  if (booking.status !== 'pending') {
+    throw new AppError(`Cannot reject a booking with status: ${booking.status}.`, 400);
+  }
+
+  const updated = await prisma.resourceBooking.update({
+    where: { id: bookingId },
+    data: { status: 'rejected' },
+    include: {
+      asset: { select: { id: true, name: true } },
+      user: { select: { id: true, name: true } },
+    },
+  });
+
+  // Notify user of rejection
+  await prisma.notification.create({
+    data: {
+      userId: booking.userId,
+      title: 'Booking Rejected',
+      message: `Your booking for "${updated.asset.name}" from ${booking.startTime.toISOString()} to ${booking.endTime.toISOString()} has been rejected.`,
+      type: 'BOOKING_REJECTED',
+      referenceId: bookingId,
+      referenceType: 'booking',
+    },
+  });
+
+  return updated;
 };
 
 /**

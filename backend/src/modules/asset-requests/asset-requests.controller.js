@@ -12,6 +12,6 @@ export const getRequests = catchAsync(async (req, res) => {
 });
 
 export const updateStatus = catchAsync(async (req, res) => {
-  const updated = await updateAssetRequestStatus(req.params.id, req.body, req.user);
+  const updated = await updateAssetRequestStatus(parseInt(req.params.id), req.body, req.user);
   res.status(200).json({ status: 'success', data: updated });
 });

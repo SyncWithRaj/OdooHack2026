@@ -29,6 +29,26 @@ export const createBooking = catchAsync(async (req, res) => {
   });
 });
 
+export const approveBooking = catchAsync(async (req, res) => {
+  const booking = await bookingService.approveBooking(parseInt(req.params.id), req.user.id);
+
+  res.status(200).json({
+    success: true,
+    message: 'Booking approved successfully.',
+    data: { booking },
+  });
+});
+
+export const rejectBooking = catchAsync(async (req, res) => {
+  const booking = await bookingService.rejectBooking(parseInt(req.params.id), req.user.id);
+
+  res.status(200).json({
+    success: true,
+    message: 'Booking rejected successfully.',
+    data: { booking },
+  });
+});
+
 /**
  * PATCH /api/v1/bookings/:id/cancel — All
  * Cancels an upcoming reservation.

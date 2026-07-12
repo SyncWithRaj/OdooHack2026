@@ -40,10 +40,12 @@ enum AllocationStatus {
 }
 
 enum BookingStatus {
+  pending
   upcoming
   ongoing
   completed
   cancelled
+  rejected
 }
 
 enum MaintenanceStatus {
@@ -294,7 +296,7 @@ model ResourceBooking {
   userId    Int           @map("user_id")
   startTime DateTime      @map("start_time") @db.Timestamp
   endTime   DateTime      @map("end_time") @db.Timestamp
-  status    BookingStatus @default(upcoming)
+  status    BookingStatus @default(pending)
   createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz
 
   // Relations
