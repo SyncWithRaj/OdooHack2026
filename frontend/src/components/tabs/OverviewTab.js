@@ -5,7 +5,7 @@ import api from '../../utils/api';
 import toast from 'react-hot-toast';
 import { Package, CheckCircle2, Wrench, CalendarCheck, ArrowRightLeft, AlertTriangle, Plus, CalendarDays, Loader2 } from 'lucide-react';
 
-export default function OverviewTab({ user }) {
+export default function OverviewTab({ user, setActiveTab }) {
   const [kpis, setKpis] = useState(null);
   const [overdueReturns, setOverdueReturns] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
@@ -105,13 +105,13 @@ export default function OverviewTab({ user }) {
 
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-3 mb-8">
-        <button className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700">
+        <button onClick={() => setActiveTab('assets')} className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700">
           <Plus className="h-4 w-4 mr-1.5" /> Register asset
         </button>
-        <button className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+        <button onClick={() => setActiveTab('bookings')} className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
           <CalendarDays className="h-4 w-4 mr-1.5" /> Book resource
         </button>
-        <button className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+        <button onClick={() => setActiveTab('maintenance')} className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
           <Wrench className="h-4 w-4 mr-1.5" /> Raise requests
         </button>
       </div>

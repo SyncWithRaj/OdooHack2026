@@ -12,6 +12,10 @@ export default function AuditTab({ user }) {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [form, setForm] = useState({ title: '', scopeType: 'location', scopeLocation: '', startDate: '', endDate: '' });
+  
+  // Verification Modal
+  const [verifyModal, setVerifyModal] = useState(null); // { itemId, status }
+  const [conditionNotes, setConditionNotes] = useState('');
 
   useEffect(() => { loadCycles(); }, []);
 
@@ -52,8 +56,10 @@ export default function AuditTab({ user }) {
 
   const handleVerifyItem = async (itemId, status) => {
     try {
-      await api.post(`/audits/${selectedCycle}/verify`, { auditItemId: itemId, status, conditionNotes: '' });
+      await api.post(`/audits/${selectedCycle}/verify`, { auditItemId: itemId, status, conditionNotes });
       toast.success(`Item marked as ${status}`);
+      setVerifyModal(null);
+      setConditionNotes('');
       loadCycleDetail(selectedCycle);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Verification failed');
@@ -129,9 +135,9 @@ export default function AuditTab({ user }) {
                     <td className="px-6 py-4 flex gap-2">
                       {item.status === 'unverified' && (
                         <>
-                          <button onClick={() => handleVerifyItem(item.id, 'verified')} className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded hover:bg-green-100">Verified</button>
-                          <button onClick={() => handleVerifyItem(item.id, 'missing')} className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded hover:bg-red-100">Missing</button>
-                          <button onClick={() => handleVerifyItem(item.id, 'damaged')} className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded hover:bg-orange-100">Damaged</button>
+                          <button onClick={() => setVerifyModal({ itemId: item.id, status: 'verified' })} className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded hover:bg-green-100">Verified</button>
+                          <button onClick={() => setVerifyModal({ itemId: item.id, status: 'missing' })} className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded hover:bg-red-100">Missing</button>
+                          <button onClick={() => setVerifyModal({ itemId: item.id, status: 'damaged' })} className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded hover:bg-orange-100">Damaged</button>
                         </>
                       )}
                     </td>
@@ -231,6 +237,31 @@ export default function AuditTab({ user }) {
                 <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">Create</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Modal */}
+      {verifyModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 capitalize">
+              Mark as {verifyModal.status}
+            </h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Condition Notes (Optional)</label>
+              <textarea 
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" 
+                rows={3} 
+                placeholder={verifyModal.status === 'damaged' ? "Describe damage..." : "Any notes..."}
+                value={conditionNotes} 
+                onChange={(e) => setConditionNotes(e.target.value)} 
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => { setVerifyModal(null); setConditionNotes(''); }} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700">Cancel</button>
+              <button onClick={() => handleVerifyItem(verifyModal.itemId, verifyModal.status)} className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">Confirm</button>
+            </div>
           </div>
         </div>
       )}

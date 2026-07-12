@@ -41,11 +41,22 @@ export default function OrgSetupTab({ user }) {
   const handleAdd = async (e) => {
     e.preventDefault();
     try {
+      const payload = { ...addForm };
+      
+      if (subTab === 'categories' && payload.metadataSchema) {
+        try {
+          payload.metadataSchema = JSON.parse(payload.metadataSchema);
+        } catch (e) {
+          toast.error('Metadata Schema must be valid JSON');
+          return;
+        }
+      }
+
       if (subTab === 'departments') {
-        await api.post('/departments', addForm);
+        await api.post('/departments', payload);
         toast.success('Department created');
       } else if (subTab === 'categories') {
-        await api.post('/categories', addForm);
+        await api.post('/categories', payload);
         toast.success('Category created');
       }
       setShowAddModal(false);
@@ -231,27 +242,64 @@ export default function OrgSetupTab({ user }) {
                 />
               </div>
               {subTab === 'departments' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Code</label>
-                  <input
-                    required
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g. ENG"
-                    value={addForm.code || ''}
-                    onChange={(e) => setAddForm({ ...addForm, code: e.target.value })}
-                  />
-                </div>
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Code</label>
+                    <input
+                      required
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g. ENG"
+                      value={addForm.code || ''}
+                      onChange={(e) => setAddForm({ ...addForm, code: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Parent Department</label>
+                    <select
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                      value={addForm.parentId || ''}
+                      onChange={(e) => setAddForm({ ...addForm, parentId: e.target.value ? parseInt(e.target.value) : undefined })}
+                    >
+                      <option value="">None (Top-level)</option>
+                      {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Department Head</label>
+                    <select
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                      value={addForm.departmentHeadId || ''}
+                      onChange={(e) => setAddForm({ ...addForm, departmentHeadId: e.target.value ? parseInt(e.target.value) : undefined })}
+                    >
+                      <option value="">Select head...</option>
+                      {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                    </select>
+                  </div>
+                </>
               )}
               {subTab === 'categories' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <textarea
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-                    rows={3}
-                    value={addForm.description || ''}
-                    onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
-                  />
-                </div>
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                      rows={2}
+                      value={addForm.description || ''}
+                      onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Metadata Schema (JSON)</label>
+                    <textarea
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:ring-blue-500 focus:border-blue-500"
+                      rows={3}
+                      placeholder='e.g. {"cpu":"string", "ram":"number"}'
+                      value={addForm.metadataSchema || ''}
+                      onChange={(e) => setAddForm({ ...addForm, metadataSchema: e.target.value })}
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Optional. Defines custom fields for assets in this category.</p>
+                  </div>
+                </>
               )}
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">Cancel</button>

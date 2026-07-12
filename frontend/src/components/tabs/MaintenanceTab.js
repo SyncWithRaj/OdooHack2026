@@ -24,6 +24,7 @@ export default function MaintenanceTab({ user }) {
   const [statusModal, setStatusModal] = useState(null);
   const [techName, setTechName] = useState('');
   const [resolveNotes, setResolveNotes] = useState('');
+  const [estimatedCost, setEstimatedCost] = useState('');
 
   useEffect(() => { loadAll(); }, []);
 
@@ -59,7 +60,11 @@ export default function MaintenanceTab({ user }) {
   const handleStatusChange = async (id, newStatus) => {
     try {
       if (newStatus === 'resolved') {
-        await api.post(`/maintenance/${id}/resolve`, { resolutionNotes: resolveNotes || 'Resolved' });
+        const cost = estimatedCost ? parseFloat(estimatedCost) : undefined;
+        await api.post(`/maintenance/${id}/resolve`, { 
+          resolutionNotes: resolveNotes || 'Resolved',
+          estimatedCost: cost
+        });
       } else {
         const body = { status: newStatus };
         if (newStatus === 'technician_assigned' && techName) {
@@ -71,6 +76,7 @@ export default function MaintenanceTab({ user }) {
       setStatusModal(null);
       setTechName('');
       setResolveNotes('');
+      setEstimatedCost('');
       loadAll();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Status update failed');
@@ -200,10 +206,16 @@ export default function MaintenanceTab({ user }) {
               </div>
             )}
             {statusModal.next === 'resolved' && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Resolution Notes</label>
-                <textarea className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" rows={2} value={resolveNotes} onChange={(e) => setResolveNotes(e.target.value)} />
-              </div>
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Cost ($)</label>
+                  <input type="number" step="0.01" className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="0.00" value={estimatedCost} onChange={(e) => setEstimatedCost(e.target.value)} />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Resolution Notes</label>
+                  <textarea className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" rows={2} value={resolveNotes} onChange={(e) => setResolveNotes(e.target.value)} />
+                </div>
+              </>
             )}
             <div className="flex justify-end gap-3">
               <button onClick={() => setStatusModal(null)} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700">Cancel</button>

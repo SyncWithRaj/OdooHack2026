@@ -14,8 +14,8 @@ export default function AllocationsTab({ user }) {
   const [loading, setLoading] = useState(true);
   const [showAllocModal, setShowAllocModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
-  const [allocForm, setAllocForm] = useState({ assetId: '', assignedToUserId: '', expectedReturnDate: '' });
-  const [transferForm, setTransferForm] = useState({ allocationId: '', targetUserId: '' });
+  const [allocForm, setAllocForm] = useState({ assetId: '', assignedToUserId: '', expectedReturnDate: '', allocationNotes: '' });
+  const [transferForm, setTransferForm] = useState({ allocationId: '', targetUserId: '', reason: '' });
 
   useEffect(() => { loadAll(); }, []);
 
@@ -42,10 +42,12 @@ export default function AllocationsTab({ user }) {
   const handleAllocate = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/allocations', allocForm);
+      const payload = { ...allocForm };
+      if (!payload.expectedReturnDate) delete payload.expectedReturnDate;
+      await api.post('/allocations', payload);
       toast.success('Asset allocated successfully');
       setShowAllocModal(false);
-      setAllocForm({ assetId: '', assignedToUserId: '', expectedReturnDate: '' });
+      setAllocForm({ assetId: '', assignedToUserId: '', expectedReturnDate: '', allocationNotes: '' });
       loadAll();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Allocation failed');
@@ -65,10 +67,13 @@ export default function AllocationsTab({ user }) {
   const handleTransferRequest = async (e) => {
     e.preventDefault();
     try {
-      await api.post(`/allocations/${transferForm.allocationId}/transfer`, { targetUserId: parseInt(transferForm.targetUserId) });
+      await api.post(`/allocations/${transferForm.allocationId}/transfer`, { 
+        targetUserId: parseInt(transferForm.targetUserId),
+        rejectionReason: transferForm.reason // Using this field name based on typical schema mappings or we can pass a notes field if supported
+      });
       toast.success('Transfer request submitted');
       setShowTransferModal(false);
-      setTransferForm({ allocationId: '', targetUserId: '' });
+      setTransferForm({ allocationId: '', targetUserId: '', reason: '' });
       loadAll();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Transfer request failed');
@@ -244,6 +249,10 @@ export default function AllocationsTab({ user }) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Expected Return Date</label>
                 <input type="date" className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" value={allocForm.expectedReturnDate} onChange={(e) => setAllocForm({...allocForm, expectedReturnDate: e.target.value})} />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Allocation Notes</label>
+                <textarea rows={2} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Optional notes" value={allocForm.allocationNotes} onChange={(e) => setAllocForm({...allocForm, allocationNotes: e.target.value})} />
+              </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setShowAllocModal(false)} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
                 <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">Allocate</button>
@@ -275,6 +284,10 @@ export default function AllocationsTab({ user }) {
                   <option value="">Select target employee</option>
                   {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Transfer</label>
+                <textarea rows={2} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Optional reason" value={transferForm.reason} onChange={(e) => setTransferForm({...transferForm, reason: e.target.value})} />
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setShowTransferModal(false)} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">Cancel</button>

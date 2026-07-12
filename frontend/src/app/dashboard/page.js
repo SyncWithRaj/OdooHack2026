@@ -41,7 +41,7 @@ export default function DashboardPage() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <OverviewTab user={user} />;
+        return <OverviewTab user={user} setActiveTab={setActiveTab} />;
       case 'org-setup':
         return <OrgSetupTab user={user} />;
       case 'assets':
