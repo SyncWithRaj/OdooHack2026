@@ -24,6 +24,7 @@ import BookingsTab from '../../components/tabs/BookingsTab';
 import AnalyticsTab from '../../components/tabs/AnalyticsTab';
 import ActivityLogsTab from '../../components/tabs/ActivityLogsTab';
 import ProfileTab from '../../components/tabs/ProfileTab';
+import NotificationsTab from '../../components/tabs/NotificationsTab';
 
 export default function DashboardPage() {
   const { user, loading: authLoading, logout, updateUser } = useAuth();
@@ -149,6 +150,8 @@ export default function DashboardPage() {
         return <AnalyticsTab {...props} />;
       case 'activity-logs':
         return <ActivityLogsTab {...props} />;
+      case 'notifications':
+        return <NotificationsTab {...props} />;
       case 'profile':
         return <ProfileTab {...props} updateUser={updateUser} />;
       default:

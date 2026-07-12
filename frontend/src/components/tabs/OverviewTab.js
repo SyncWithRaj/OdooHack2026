@@ -82,8 +82,8 @@ export default function OverviewTab({ user, setActiveTab }) {
   
         setAnalyticsData({
           utilization: utilRes.data.data.utilization || [],
-          maintenanceFreq: maintFreqRes.data.data.frequency || [],
-          deptSummary: deptRes.data.data.summary || []
+          maintenanceFreq: maintFreqRes.data.data.maintenanceFrequency || [],
+          deptSummary: deptRes.data.data.departmentSummary || []
         });
       }
 
