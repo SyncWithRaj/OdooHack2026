@@ -5,12 +5,21 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
-import { Mail, Lock, Loader2 } from 'lucide-react';
+import { Mail, Lock, Loader2, ArrowRight, ShieldAlert, KeyRound, QrCode } from 'lucide-react';
+import FormField from '../../components/shared/FormField';
+import Button from '../../components/shared/Button';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Forgot Password State Flow: 'login' | 'forgot' | 'verify' | 'reset'
+  const [authView, setAuthView] = useState('login'); 
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetOtp, setResetOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  
   const router = useRouter();
 
   const handleLogin = async (e) => {
@@ -33,78 +42,289 @@ export default function LoginPage() {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.post('/auth/forgot-password', { email: resetEmail });
+      toast.success('Password reset OTP sent to your email');
+      setAuthView('verify');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to send reset OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyResetOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.post('/auth/verify-reset-otp', { email: resetEmail, otp: resetOtp });
+      toast.success('OTP verified. Please set your new password.');
+      setAuthView('reset');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Invalid or expired OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.post('/auth/reset-password', { email: resetEmail, otp: resetOtp, newPassword });
+      toast.success('Password reset successfully. Please log in.');
+      setAuthView('login');
+      setEmail(resetEmail);
+      setPassword('');
+      setResetEmail('');
+      setResetOtp('');
+      setNewPassword('');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to reset password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-          Sign in to your account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Or{' '}
-          <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-            register for a new account
-          </Link>
-        </p>
-      </div>
+    <div className="min-h-screen bg-surface flex flex-col md:flex-row">
+      
+      {/* Left panel: Brand details (desktop only) */}
+      <div className="hidden md:flex md:w-1/2 bg-ink text-white p-16 flex-col justify-between relative overflow-hidden">
+        {/* Decorative Tag Stamp Corner Background */}
+        <div className="absolute right-[-40px] top-[-40px] w-48 h-48 rounded-full border border-hairline/10 flex items-center justify-center opacity-40">
+          <div className="w-32 h-32 rounded-full border border-hairline/10" />
+        </div>
+        
+        {/* Brand Header */}
+        <div className="flex items-center gap-2 relative z-10">
+          <div className="w-6 h-6 bg-accent rounded-[4px] flex items-center justify-center font-bold text-accent-ink text-xs font-mono">
+            A
+          </div>
+          <span className="text-xl font-bold font-display tracking-widest uppercase">
+            Asset<span className="text-accent font-light">Flow</span>
+          </span>
+        </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
-          <form className="space-y-6" onSubmit={handleLogin}>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="you@example.com"
-                />
-              </div>
+        {/* Feature Mock Stamp Display */}
+        <div className="my-auto flex flex-col gap-8 relative z-10 max-w-lg">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-white/5 border border-hairline/10 rounded">
+              <QrCode className="w-6 h-6 text-accent" />
             </div>
+            <div>
+              <h4 className="text-base font-bold font-display uppercase tracking-wider text-white">Statically Tagged Lifecycle</h4>
+              <p className="text-sm text-steel mt-1">
+                Every physical resource maps back to a unique, stamped tracking code and barcode. Check histories in real time.
+              </p>
+            </div>
+          </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-white/5 border border-hairline/10 rounded">
+              <ArrowRight className="w-6 h-6 text-accent" />
             </div>
+            <div>
+              <h4 className="text-base font-bold font-display uppercase tracking-wider text-white">Interactive Allocation Flow</h4>
+              <p className="text-sm text-steel mt-1">
+                Allocate hardware to departments, handle return check-ins, or request ownership transfers with validation.
+              </p>
+            </div>
+          </div>
+        </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Sign in'}
-              </button>
-            </div>
-          </form>
+        {/* Bottom Metadata Stamp */}
+        <div className="flex items-center justify-between text-[10px] text-steel font-mono tracking-wider uppercase border-t border-hairline/10 pt-6 relative z-10">
+          <span>Enterprise Asset ERP Module</span>
+          <span>v1.2.0</span>
         </div>
       </div>
+
+      {/* Right panel: Form views */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-surface">
+        <div className="w-full max-w-md bg-white border border-hairline rounded-lg p-8 shadow-sm relative">
+          
+          {/* Accent Notched Corner Details */}
+          <div className="absolute top-0 right-0 w-3 h-3 bg-accent rounded-bl-[4px]" />
+          <div className="absolute top-[3px] right-[3px] w-1.5 h-1.5 rounded-full bg-white" />
+
+          {/* VIEW: Login Form */}
+          {authView === 'login' && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+              <div className="flex flex-col gap-1 text-center md:text-left">
+                <h2 className="text-2xl font-bold font-display text-ink uppercase tracking-wider">Sign In</h2>
+                <p className="text-xs text-steel">
+                  Don't have an account?{' '}
+                  <Link href="/signup" className="font-semibold text-accent hover:underline">
+                    Register employee account
+                  </Link>
+                </p>
+              </div>
+
+              <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                <FormField
+                  label="Email Address"
+                  id="email"
+                  type="email"
+                  required
+                  placeholder="yourname@assetflow.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+
+                <div className="flex flex-col gap-1">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-steel">Password</label>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setResetEmail(email);
+                        setAuthView('forgot');
+                      }}
+                      className="text-xs font-semibold text-accent hover:underline bg-transparent border-none cursor-pointer"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                  <FormField
+                    id="password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  loading={loading}
+                  className="w-full mt-2 font-semibold uppercase tracking-wider"
+                >
+                  Authenticate
+                </Button>
+              </form>
+            </div>
+          )}
+
+          {/* VIEW: Forgot Password Email */}
+          {authView === 'forgot' && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+              <div className="flex flex-col gap-1">
+                <button 
+                  onClick={() => setAuthView('login')}
+                  className="text-xs font-bold text-accent hover:underline mb-1 text-left"
+                >
+                  ← Back to Login
+                </button>
+                <h2 className="text-2xl font-bold font-display text-ink uppercase tracking-wider">Reset Password</h2>
+                <p className="text-xs text-steel">
+                  Provide your email to receive a password reset OTP verification code.
+                </p>
+              </div>
+
+              <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
+                <FormField
+                  label="Registered Email"
+                  id="reset-email"
+                  type="email"
+                  required
+                  placeholder="name@assetflow.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                />
+
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  loading={loading}
+                  className="w-full mt-2 font-semibold uppercase tracking-wider"
+                >
+                  Send OTP Code
+                </Button>
+              </form>
+            </div>
+          )}
+
+          {/* VIEW: Verify Reset OTP */}
+          {authView === 'verify' && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+              <div className="flex flex-col gap-1">
+                <button 
+                  onClick={() => setAuthView('forgot')}
+                  className="text-xs font-bold text-accent hover:underline mb-1 text-left"
+                >
+                  ← Back
+                </button>
+                <h2 className="text-2xl font-bold font-display text-ink uppercase tracking-wider">Verify Code</h2>
+                <p className="text-xs text-steel">
+                  Enter the 6-digit OTP verification code sent to <span className="font-semibold text-ink">{resetEmail}</span>.
+                </p>
+              </div>
+
+              <form onSubmit={handleVerifyResetOtp} className="flex flex-col gap-4">
+                <FormField
+                  label="OTP Code"
+                  id="reset-otp"
+                  type="text"
+                  maxLength="6"
+                  required
+                  placeholder="123456"
+                  value={resetOtp}
+                  onChange={(e) => setResetOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                  className="text-center font-mono text-lg tracking-[0.5em] pr-0"
+                />
+
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  loading={loading}
+                  className="w-full mt-2 font-semibold uppercase tracking-wider"
+                >
+                  Verify Code
+                </Button>
+              </form>
+            </div>
+          )}
+
+          {/* VIEW: Set New Password */}
+          {authView === 'reset' && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-2xl font-bold font-display text-ink uppercase tracking-wider">New Password</h2>
+                <p className="text-xs text-steel">
+                  Create a secure, new password for your account.
+                </p>
+              </div>
+
+              <form onSubmit={handleResetPassword} className="flex flex-col gap-4">
+                <FormField
+                  label="New Password"
+                  id="new-password"
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  loading={loading}
+                  className="w-full mt-2 font-semibold uppercase tracking-wider"
+                >
+                  Update Password
+                </Button>
+              </form>
+            </div>
+          )}
+
+        </div>
+      </div>
+
     </div>
   );
 }

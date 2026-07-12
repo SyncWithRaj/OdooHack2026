@@ -1,26 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Space+Grotesk:wght@300..700&display=swap');
+
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FAFAF9; /* --surface */
+  --foreground: #1B2429; /* --ink */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@theme {
+  --font-sans: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-display: 'Space Grotesk', sans-serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: #1B2429;
+  --color-steel: #5B6B73;
+  --color-surface: #FAFAF9;
+  --color-surface-raised: #FFFFFF;
+  --color-hairline: #E4E2DD;
+  --color-accent: #E8A33D;
+  --color-accent-ink: #5C3B0E;
+
+  --color-status-available: #2E9B5F;
+  --color-status-allocated: #3B7DD8;
+  --color-status-reserved: #8B5CF6;
+  --color-status-maintenance: #E8A33D;
+  --color-status-lost: #D64545;
+  --color-status-retired: #8A8F94;
+  --color-status-disposed: #4B4F53;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  font-family: 'IBM Plex Sans', sans-serif;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.mono-tag {
+  font-family: 'IBM Plex Mono', monospace;
 }
