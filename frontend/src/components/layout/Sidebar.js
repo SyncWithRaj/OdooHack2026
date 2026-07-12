@@ -43,15 +43,20 @@ export default function Sidebar({ user, role, activeTab, setActiveTab, unreadCou
   return (
     <div className="flex flex-col w-64 bg-ink border-r border-hairline h-screen fixed select-none z-30">
       {/* Brand Logo Header */}
-      <div className="flex items-center gap-2 h-16 border-b border-hairline/15 px-6">
+      <button 
+        onClick={() => setActiveTab('overview')}
+        className="flex items-center gap-3 h-16 border-b border-hairline/15 px-6 hover:bg-white/[0.03] transition-colors text-left w-full group/logo focus:outline-none cursor-pointer"
+      >
         {/* Stamped physical look element */}
-        <div className="w-5 h-5 bg-accent rounded-[4px] flex items-center justify-center font-bold text-accent-ink text-[11px] font-mono shadow-sm">
-          A
+        <div className="w-6 h-6 bg-accent rounded-[6px] flex items-center justify-center font-bold text-accent-ink shadow-md shrink-0 group-hover/logo:scale-105 group-hover/logo:shadow-[0_0_12px_rgba(232,163,61,0.3)] transition-all duration-300">
+          <svg className="w-4.5 h-4.5 text-accent-ink stroke-[2]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
         </div>
-        <span className="text-lg font-bold font-display text-white tracking-widest uppercase">
-          Asset<span className="text-accent font-light">Flow</span>
+        <span className="text-base font-black tracking-wider text-white font-display uppercase">
+          ASSET<span className="text-accent font-light">FLOW</span>
         </span>
-      </div>
+      </button>
       
       {/* Navigation Links */}
       <div className="flex-1 overflow-y-auto py-6">

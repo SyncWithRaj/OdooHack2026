@@ -47,34 +47,34 @@ export default function WorkflowPipeline({
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: idx * 0.1, duration: 0.4 }}
                 className={`
-                  w-[48px] h-[48px] rounded-full flex items-center justify-center border-2 shrink-0 transition-colors duration-300
+                  w-12 h-12 rounded-full flex items-center justify-center border-2 shrink-0 transition-all duration-300 relative z-10
                   ${isCompleted 
-                    ? 'bg-accent/15 border-accent text-accent-ink' 
+                    ? 'bg-accent border-accent text-accent-ink shadow-sm' 
                     : isCurrent 
-                      ? 'bg-white border-accent text-accent shadow-[0_0_12px_rgba(232,163,61,0.25)]' 
-                      : 'bg-surface border-hairline text-steel/50'}
+                      ? 'bg-white border-accent text-accent shadow-[0_0_14px_rgba(232,163,61,0.25)]' 
+                      : 'bg-white border-hairline text-steel/40'}
                 `}
               >
                 {isCompleted ? (
                   <Check className="w-5 h-5 stroke-[3px]" />
                 ) : Icon ? (
-                  <Icon className={`w-5 h-5 ${isCurrent ? 'animate-pulse' : ''}`} />
+                  <Icon className={`w-4.5 h-4.5 ${isCurrent ? 'animate-pulse' : ''}`} />
                 ) : (
                   <span className="font-mono text-sm font-bold">{idx + 1}</span>
                 )}
               </motion.div>
 
               {/* Step Content */}
-              <div className="flex flex-col md:items-center">
+              <div className="flex flex-col md:items-center mt-1 md:mt-3 text-center">
                 <span className={`
-                  text-xs font-bold uppercase tracking-wider transition-colors duration-300
+                  text-[10px] md:text-xs font-bold uppercase tracking-wider transition-colors duration-300
                   ${isCurrent ? 'text-accent' : isCompleted ? 'text-ink' : 'text-steel/60'}
                 `}>
                   {step.label}
                 </span>
                 
                 {step.description && (
-                  <span className="text-[10px] text-steel font-medium mt-0.5 max-w-[150px] leading-tight">
+                  <span className="text-[10px] text-steel font-medium mt-1 max-w-[150px] leading-relaxed block">
                     {step.description}
                   </span>
                 )}
