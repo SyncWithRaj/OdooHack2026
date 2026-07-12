@@ -7,8 +7,389 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Test {
-  id        Int      @id @default(autoincrement())
-  message   String
-  createdAt DateTime @default(now())
+// ============================================================================
+// ENUM TYPES — Maps directly from the provided SQL enums
+// ============================================================================
+
+enum UserRole {
+  employee
+  department_head
+  asset_manager
+  admin
+}
+
+enum GeneralStatus {
+  active
+  inactive
+}
+
+enum AssetStatus {
+  available
+  allocated
+  reserved
+  under_maintenance
+  lost
+  retired
+  disposed
+}
+
+enum AllocationStatus {
+  active
+  returned
+  pending_transfer
+}
+
+enum BookingStatus {
+  upcoming
+  ongoing
+  completed
+  cancelled
+}
+
+enum MaintenanceStatus {
+  pending
+  approved
+  rejected
+  technician_assigned
+  in_progress
+  resolved
+}
+
+enum MaintenancePriority {
+  low
+  medium
+  high
+  urgent
+}
+
+enum AuditStatus {
+  open
+  closed
+}
+
+enum AuditItemVerification {
+  unverified
+  verified
+  missing
+  damaged
+}
+
+enum TransferStatus {
+  requested
+  approved
+  rejected
+}
+
+// ============================================================================
+// CORE MASTER DATA — Organization Setup
+// ============================================================================
+
+model Department {
+  id               Int            @id @default(autoincrement())
+  name             String         @db.VarChar(255)
+  code             String         @unique @db.VarChar(50)
+  parentId         Int?           @map("parent_id")
+  departmentHeadId Int?           @map("department_head_id")
+  status           GeneralStatus  @default(active)
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  parent           Department?    @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children         Department[]   @relation("DepartmentHierarchy")
+  head             User?          @relation("DepartmentHead", fields: [departmentHeadId], references: [id], onDelete: SetNull)
+  users            User[]         @relation("UserDepartment")
+  allocations      Allocation[]   @relation("DeptAllocation")
+  transferTargets  TransferRequest[] @relation("TransferTargetDept")
+  auditCycles      AuditCycle[]
+
+  @@map("departments")
+}
+
+model User {
+  id                     Int            @id @default(autoincrement())
+  name                   String         @db.VarChar(255)
+  email                  String         @unique @db.VarChar(255)
+  passwordHash           String         @map("password_hash") @db.VarChar(255)
+  role                   UserRole       @default(employee)
+  departmentId           Int?           @map("department_id")
+  status                 GeneralStatus  @default(active)
+  isEmailVerified        Boolean        @default(false) @map("is_email_verified")
+  emailOtp               String?        @map("email_otp") @db.VarChar(6)
+  emailOtpExpires        DateTime?      @map("email_otp_expires") @db.Timestamptz
+  passwordResetOtp       String?        @map("password_reset_otp") @db.VarChar(6)
+  passwordResetExpires   DateTime?      @map("password_reset_expires") @db.Timestamptz
+  createdAt              DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  department          Department?          @relation("UserDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+  headOfDepartments   Department[]         @relation("DepartmentHead")
+  allocationsReceived Allocation[]         @relation("AllocationAssignee")
+  allocationsGiven    Allocation[]         @relation("AllocationAllocator")
+  transfersRequested  TransferRequest[]    @relation("TransferRequester")
+  transfersTargeted   TransferRequest[]    @relation("TransferTarget")
+  transfersApproved   TransferRequest[]    @relation("TransferApprover")
+  bookings            ResourceBooking[]
+  maintenanceRaised   MaintenanceRequest[] @relation("MaintenanceRaiser")
+  maintenanceApproved MaintenanceRequest[] @relation("MaintenanceApprover")
+  auditCyclesCreated  AuditCycle[]         @relation("AuditCreator")
+  auditCyclesAssigned AuditCycle[]         @relation("AuditCycleAuditors")
+  auditItemsVerified  AuditItem[]
+  discrepanciesResolved DiscrepancyReport[] @relation("DiscrepancyResolver")
+  notifications       Notification[]
+  activityLogs        ActivityLog[]
+
+  @@index([email], map: "idx_users_email")
+  @@index([departmentId], map: "idx_users_dept")
+  @@map("users")
+}
+
+model AssetCategory {
+  id             Int      @id @default(autoincrement())
+  name           String   @unique @db.VarChar(100)
+  description    String?  @db.Text
+  metadataSchema Json?    @map("metadata_schema")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  assets Asset[]
+
+  @@map("asset_categories")
+}
+
+// ============================================================================
+// ASSET REGISTRY
+// ============================================================================
+
+model Asset {
+  id              Int         @id @default(autoincrement())
+  name            String      @db.VarChar(255)
+  assetTag        String      @unique @map("asset_tag") @db.VarChar(50)
+  serialNumber    String?     @map("serial_number") @db.VarChar(100)
+  categoryId      Int         @map("category_id")
+  status          AssetStatus @default(available)
+  condition       String?     @default("New") @db.VarChar(255)
+  location        String?     @db.VarChar(255)
+  acquisitionDate DateTime?   @map("acquisition_date") @db.Date
+  acquisitionCost Decimal?    @map("acquisition_cost") @db.Decimal(12, 2)
+  photoUrl        String?     @map("photo_url") @db.VarChar(500)
+  documents       Json?
+  isBookable      Boolean     @default(false) @map("is_bookable")
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  category            AssetCategory        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  allocations         Allocation[]
+  transferRequests    TransferRequest[]
+  bookings            ResourceBooking[]
+  maintenanceRequests MaintenanceRequest[]
+  auditItems          AuditItem[]
+  discrepancyReports  DiscrepancyReport[]
+
+  @@index([assetTag, serialNumber], map: "idx_assets_tag_serial")
+  @@index([status, categoryId], map: "idx_assets_status_category")
+  @@map("assets")
+}
+
+// ============================================================================
+// ALLOCATION & TRANSFER WORKFLOW
+// ============================================================================
+
+model Allocation {
+  id                   Int              @id @default(autoincrement())
+  assetId              Int              @map("asset_id")
+  assignedToUserId     Int?             @map("assigned_to_user_id")
+  assignedToDeptId     Int?             @map("assigned_to_dept_id")
+  allocatedById        Int              @map("allocated_by_id")
+  allocationDate       DateTime         @default(now()) @map("allocation_date") @db.Timestamptz
+  expectedReturnDate   DateTime?        @map("expected_return_date") @db.Date
+  actualReturnDate     DateTime?        @map("actual_return_date") @db.Timestamptz
+  returnConditionNotes String?          @map("return_condition_notes") @db.Text
+  status               AllocationStatus @default(active)
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  asset           Asset            @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  assignedToUser  User?            @relation("AllocationAssignee", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  assignedToDept  Department?      @relation("DeptAllocation", fields: [assignedToDeptId], references: [id], onDelete: SetNull)
+  allocatedBy     User             @relation("AllocationAllocator", fields: [allocatedById], references: [id])
+  transferRequests TransferRequest[]
+
+  @@index([assetId, status], map: "idx_allocations_active")
+  @@map("allocations")
+}
+
+model TransferRequest {
+  id                  Int            @id @default(autoincrement())
+  assetId             Int            @map("asset_id")
+  currentAllocationId Int            @map("current_allocation_id")
+  requestedByUserId   Int            @map("requested_by_user_id")
+  targetUserId        Int?           @map("target_user_id")
+  targetDeptId        Int?           @map("target_dept_id")
+  status              TransferStatus @default(requested)
+  approvedById        Int?           @map("approved_by_id")
+  rejectionReason     String?        @map("rejection_reason") @db.Text
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  asset              Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  currentAllocation  Allocation @relation(fields: [currentAllocationId], references: [id], onDelete: Cascade)
+  requestedBy        User       @relation("TransferRequester", fields: [requestedByUserId], references: [id])
+  targetUser         User?      @relation("TransferTarget", fields: [targetUserId], references: [id])
+  targetDept         Department? @relation("TransferTargetDept", fields: [targetDeptId], references: [id])
+  approvedBy         User?      @relation("TransferApprover", fields: [approvedById], references: [id])
+
+  @@map("transfer_requests")
+}
+
+// ============================================================================
+// RESOURCE BOOKING CALENDAR
+// ============================================================================
+
+model ResourceBooking {
+  id        Int           @id @default(autoincrement())
+  assetId   Int           @map("asset_id")
+  userId    Int           @map("user_id")
+  startTime DateTime      @map("start_time") @db.Timestamp
+  endTime   DateTime      @map("end_time") @db.Timestamp
+  status    BookingStatus @default(upcoming)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, startTime, endTime], map: "idx_bookings_calendar")
+  @@map("resource_bookings")
+}
+
+// ============================================================================
+// MAINTENANCE MANAGEMENT
+// ============================================================================
+
+model MaintenanceRequest {
+  id              Int                 @id @default(autoincrement())
+  assetId         Int                 @map("asset_id")
+  raisedById      Int                 @map("raised_by_id")
+  description     String              @db.Text
+  priority        MaintenancePriority @default(medium)
+  status          MaintenanceStatus   @default(pending)
+  photoUrl        String?             @map("photo_url") @db.VarChar(500)
+  technicianName  String?             @map("technician_name") @db.VarChar(255)
+  resolutionNotes String?             @map("resolution_notes") @db.Text
+  approvedById    Int?                @map("approved_by_id")
+  resolvedAt      DateTime?           @map("resolved_at") @db.Timestamptz
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  asset      Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  raisedBy   User  @relation("MaintenanceRaiser", fields: [raisedById], references: [id])
+  approvedBy User? @relation("MaintenanceApprover", fields: [approvedById], references: [id])
+
+  @@map("maintenance_requests")
+}
+
+// ============================================================================
+// ASSET AUDIT CYCLES
+// ============================================================================
+
+model AuditCycle {
+  id                Int         @id @default(autoincrement())
+  title             String      @db.VarChar(255)
+  scopeType         String      @map("scope_type") @db.VarChar(50)
+  scopeDepartmentId Int?        @map("scope_department_id")
+  scopeLocation     String?     @map("scope_location") @db.VarChar(255)
+  startDate         DateTime    @map("start_date") @db.Date
+  endDate           DateTime    @map("end_date") @db.Date
+  status            AuditStatus @default(open)
+  createdById       Int         @map("created_by_id")
+  createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  scopeDepartment Department?         @relation(fields: [scopeDepartmentId], references: [id], onDelete: SetNull)
+  createdBy       User                @relation("AuditCreator", fields: [createdById], references: [id])
+  auditors        User[]              @relation("AuditCycleAuditors")
+  items           AuditItem[]
+  discrepancies   DiscrepancyReport[]
+
+  @@map("audit_cycles")
+}
+
+model AuditItem {
+  id           Int                   @id @default(autoincrement())
+  auditCycleId Int                   @map("audit_cycle_id")
+  assetId      Int                   @map("asset_id")
+  verifiedById Int?                  @map("verified_by_id")
+  status       AuditItemVerification @default(unverified)
+  notes        String?               @db.Text
+  verifiedAt   DateTime?             @map("verified_at") @db.Timestamptz
+
+  // Relations
+  auditCycle AuditCycle @relation(fields: [auditCycleId], references: [id], onDelete: Cascade)
+  asset      Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  verifiedBy User?      @relation(fields: [verifiedById], references: [id])
+
+  @@unique([auditCycleId, assetId])
+  @@map("audit_items")
+}
+
+model DiscrepancyReport {
+  id             Int                   @id @default(autoincrement())
+  auditCycleId   Int                   @map("audit_cycle_id")
+  assetId        Int                   @map("asset_id")
+  expectedStatus AssetStatus           @map("expected_status")
+  foundStatus    AuditItemVerification @map("found_status")
+  details        String?               @db.Text
+  isResolved     Boolean               @default(false) @map("is_resolved")
+  resolvedById   Int?                  @map("resolved_by_id")
+  resolvedAt     DateTime?             @map("resolved_at") @db.Timestamptz
+  createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  auditCycle AuditCycle @relation(fields: [auditCycleId], references: [id], onDelete: Cascade)
+  asset      Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  resolvedBy User?      @relation("DiscrepancyResolver", fields: [resolvedById], references: [id])
+
+  @@map("discrepancy_reports")
+}
+
+// ============================================================================
+// NOTIFICATIONS & ACTIVITY LOGS
+// ============================================================================
+
+model Notification {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  title         String   @db.VarChar(255)
+  message       String   @db.Text
+  type          String   @db.VarChar(100)
+  referenceId   Int?     @map("reference_id")
+  referenceType String?  @map("reference_type") @db.VarChar(50)
+  isRead        Boolean  @default(false) @map("is_read")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead], map: "idx_notifications_unread")
+  @@map("notifications")
+}
+
+model ActivityLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?     @map("user_id")
+  action     String   @db.VarChar(255)
+  entityType String   @map("entity_type") @db.VarChar(100)
+  entityId   Int?     @map("entity_id")
+  details    Json?
+  ipAddress  String?  @map("ip_address") @db.VarChar(50)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId], map: "idx_activity_logs_entity")
+  @@map("activity_logs")
 }
