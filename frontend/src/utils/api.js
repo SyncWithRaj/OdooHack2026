@@ -118,7 +118,18 @@ async function apiRequest(endpoint, options = {}) {
       const errorData = await res.json().catch(() => ({}));
       throw new Error(errorData.message || `API error ${res.status}`);
     }
-    return await res.json();
+    const data = await res.json();
+    if (data.data !== undefined) {
+      const d = data.data;
+      if (typeof d === 'object' && d !== null) {
+        const keys = Object.keys(d);
+        if (keys.length === 1) {
+          return d[keys[0]];
+        }
+      }
+      return d;
+    }
+    return data;
   } catch (err) {
     console.warn(`Backend connection failed for ${endpoint}. Using Mock Storage. Error:`, err.message);
     return handleMockFallback(endpoint, options);
