@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
-import { Plus, Search, RefreshCw, Check, X, Package, ArrowLeft } from 'lucide-react';
+import { Plus, Search, RefreshCw, Check, X, Package, ArrowLeft, Building, ClipboardCheck, CheckCircle2 } from 'lucide-react';
 import Button from '../shared/Button';
 import FormField from '../shared/FormField';
 import Modal from '../shared/Modal';
 import DataTable from '../shared/DataTable';
+import WorkflowPipeline from '../shared/WorkflowPipeline';
 
 export default function AssetRequestsTab({ user, setActiveTab }) {
   const [requests, setRequests] = useState([]);
@@ -211,6 +212,37 @@ export default function AssetRequestsTab({ user, setActiveTab }) {
     }
   ];
 
+  const requestSteps = [
+    {
+      id: 'submitted',
+      label: 'Submitted',
+      description: 'Asset request raised',
+      status: 'completed',
+      icon: Package
+    },
+    {
+      id: 'dept_review',
+      label: 'Dept Head Review',
+      description: 'Departmental approval step',
+      status: 'current',
+      icon: Building
+    },
+    {
+      id: 'admin_review',
+      label: 'Manager Review',
+      description: 'Procurement / stock lookup',
+      status: 'upcoming',
+      icon: ClipboardCheck
+    },
+    {
+      id: 'allocated',
+      label: 'Allocated',
+      description: 'Asset checked out to user',
+      status: 'upcoming',
+      icon: CheckCircle2
+    }
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       {/* Title Header */}
@@ -248,6 +280,12 @@ export default function AssetRequestsTab({ user, setActiveTab }) {
             Request New Asset
           </Button>
         </div>
+      </div>
+
+      {/* Workflow Visualization */}
+      <div className="flex flex-col gap-3">
+        <h3 className="text-xs font-bold font-mono text-steel uppercase tracking-wider">Request Process Flow</h3>
+        <WorkflowPipeline steps={requestSteps} />
       </div>
 
       {/* Toolbar */}

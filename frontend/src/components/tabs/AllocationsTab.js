@@ -10,6 +10,7 @@ import Button from '../shared/Button';
 import FormField from '../shared/FormField';
 import Modal from '../shared/Modal';
 import DataTable from '../shared/DataTable';
+import WorkflowPipeline from '../shared/WorkflowPipeline';
 
 export default function AllocationsTab({ user, refreshAssets }) {
   const [allocations, setAllocations] = useState([]);
@@ -290,6 +291,37 @@ export default function AllocationsTab({ user, refreshAssets }) {
     }
   ];
 
+  const allocationSteps = [
+    {
+      id: 'registered',
+      label: 'Inventory',
+      description: 'Asset logged in system',
+      status: 'completed',
+      icon: ShieldCheck
+    },
+    {
+      id: 'assigned',
+      label: 'Assignment',
+      description: 'Assignee selected',
+      status: 'completed',
+      icon: User
+    },
+    {
+      id: 'active',
+      label: 'Active Service',
+      description: 'Asset in active service',
+      status: 'current',
+      icon: ArrowRightLeft
+    },
+    {
+      id: 'returned',
+      label: 'Returned',
+      description: 'Re-inventoried or transferred',
+      status: 'upcoming',
+      icon: RefreshCw
+    }
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       {/* Title Header */}
@@ -318,6 +350,12 @@ export default function AllocationsTab({ user, refreshAssets }) {
             </Button>
           )}
         </div>
+      </div>
+
+      {/* Workflow Visualization */}
+      <div className="flex flex-col gap-3">
+        <h3 className="text-xs font-bold font-mono text-steel uppercase tracking-wider">Allocation Lifecycle Pipeline</h3>
+        <WorkflowPipeline steps={allocationSteps} />
       </div>
 
       {/* Toolbar */}

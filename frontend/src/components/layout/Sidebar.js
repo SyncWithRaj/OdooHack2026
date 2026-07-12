@@ -15,6 +15,7 @@ import {
   User as UserIcon,
   Bell
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const getNavigation = (role) => {
   const routes = [
@@ -62,23 +63,30 @@ export default function Sidebar({ user, role, activeTab, setActiveTab, unreadCou
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`
-                  w-full group flex items-center px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-md transition-all duration-150 text-left
+                  w-full group flex items-center px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-md text-left relative overflow-hidden transition-all duration-150
                   ${isActive 
-                    ? 'bg-accent text-accent-ink shadow-md' 
+                    ? 'text-accent-ink shadow-sm' 
                     : 'text-steel hover:text-white hover:bg-white/5'}
                 `}
               >
+                {isActive && (
+                  <motion.div
+                    layoutId="active-sidebar-pill"
+                    className="absolute inset-0 bg-accent -z-10 rounded-md"
+                    transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                  />
+                )}
                 <item.icon
                   className={`
-                    flex-shrink-0 mr-3 h-4.5 w-4.5 transition-colors
+                    flex-shrink-0 mr-3 h-4.5 w-4.5 transition-colors relative z-10
                     ${isActive ? 'text-accent-ink' : 'text-steel group-hover:text-white'}
                   `}
                   aria-hidden="true"
                 />
-                <span className="truncate flex-1">{item.name}</span>
+                <span className="truncate flex-1 relative z-10">{item.name}</span>
                 {item.id === 'notifications' && unreadCount > 0 && (
                   <span className={`
-                    ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full
+                    ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full relative z-10
                     ${isActive ? 'bg-white/20 text-accent-ink' : 'bg-status-lost text-white'}
                   `}>
                     {unreadCount > 99 ? '99+' : unreadCount}

@@ -11,6 +11,9 @@ import Modal from '../shared/Modal';
 import FormField from '../shared/FormField';
 import toast from 'react-hot-toast';
 import DashboardCalendar from '../shared/DashboardCalendar';
+import WorkflowPipeline from '../shared/WorkflowPipeline';
+import SkeletonLoader from '../shared/SkeletonLoader';
+import { motion } from 'framer-motion';
 import {
   ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
   Line, Area
@@ -202,14 +205,13 @@ export default function OverviewTab({ user, setActiveTab }) {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6 animate-pulse">
-        <div className="h-10 w-48 bg-hairline rounded" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 bg-hairline rounded-lg" />
-          ))}
+      <div className="flex flex-col gap-8">
+        <div className="h-10 w-48 bg-hairline rounded animate-pulse" />
+        <SkeletonLoader type="card" count={4} />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          <div className="h-[400px] bg-white border border-hairline rounded-lg p-6 animate-pulse" />
+          <SkeletonLoader type="chart" />
         </div>
-        <div className="h-64 bg-hairline rounded-lg w-full" />
       </div>
     );
   }
@@ -217,6 +219,30 @@ export default function OverviewTab({ user, setActiveTab }) {
   // Define KPI Cards based on user role
   const isManager = ['admin', 'asset_manager'].includes(user.role);
   const isDeptHead = user.role === 'department_head';
+
+  const lifecycleSteps = [
+    {
+      id: 'available',
+      label: 'Available',
+      description: `${kpis?.assetsAvailable ?? 0} In Inventory`,
+      status: 'completed',
+      icon: Package
+    },
+    {
+      id: 'allocated',
+      label: 'Allocated',
+      description: `${kpis?.assetsAllocated ?? 0} In Active Use`,
+      status: (kpis?.assetsAllocated > 0) ? 'current' : 'completed',
+      icon: ArrowRightLeft
+    },
+    {
+      id: 'maintenance',
+      label: 'In Maintenance',
+      description: `${kpis?.maintenanceToday ?? 0} Repair Tickets`,
+      status: (kpis?.maintenanceToday > 0) ? 'current' : 'upcoming',
+      icon: Wrench
+    }
+  ];
 
   return (
     <div className="flex flex-col gap-8">
@@ -229,6 +255,12 @@ export default function OverviewTab({ user, setActiveTab }) {
         <p className="text-sm text-steel">
           You are currently in the <span className="capitalize font-semibold text-ink bg-surface px-2 py-0.5 rounded border border-hairline">{user.role.replace('_', ' ')}</span> view.
         </p>
+      </div>
+
+      {/* Resource Lifecycle Pipeline */}
+      <div className="flex flex-col gap-3">
+        <h3 className="text-xs font-bold font-mono text-steel uppercase tracking-wider">Asset Lifecycle Pipeline</h3>
+        <WorkflowPipeline steps={lifecycleSteps} />
       </div>
 
       {/* KPI Section */}
