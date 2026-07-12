@@ -44,9 +44,23 @@ export default function DashboardPage() {
 
   const fetchNotifications = async () => {
     try {
-      const res = await api.get('/notifications');
-      setNotifications(res.data.data.notifications);
-      setUnreadCount(res.data.unreadCount);
+      const res = await api.get('/notifications?limit=10');
+      let fetchedNotifs = res.data.data.notifications || [];
+      
+      // If no real notifications, fallback to recent 10 activity logs for the UI
+      if (fetchedNotifs.length === 0) {
+        const logsRes = await api.get('/analytics/logs', { params: { limit: 10 } });
+        fetchedNotifs = (logsRes.data.data.logs || []).map(log => ({
+          id: `log-${log.id}`,
+          title: `Activity: ${log.action.replace(/_/g, ' ').toUpperCase()}`,
+          message: `${log.user ? log.user.name : 'System'} interacted with ${log.entityType} #${log.entityId}`,
+          createdAt: log.createdAt,
+          isRead: true,
+        }));
+      }
+
+      setNotifications(fetchedNotifs);
+      setUnreadCount(res.data.unreadCount || 0);
     } catch (err) {
       console.error('Failed to fetch notifications', err);
     }
