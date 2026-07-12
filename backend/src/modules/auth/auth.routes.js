@@ -9,6 +9,8 @@ import {
   forgotPassword,
   verifyResetOtp,
   resetPassword,
+  changePassword,
+  updateProfile,
 } from './auth.controller.js';
 import {
   signupValidators,
@@ -46,6 +48,12 @@ router.post('/verify-login-otp', otpValidators, validate, verifyLoginOtp);
 
 // Get current user (requires JWT from verify-*-otp)
 router.get('/me', protect, getMe);
+
+// Update profile (name)
+router.patch('/update-profile', protect, updateProfile);
+
+// Change password (requires current password)
+router.patch('/change-password', protect, changePassword);
 
 // ── FORGOT PASSWORD FLOW ─────────────────────────────────────
 

@@ -7,6 +7,7 @@ import departmentRoutes from './modules/departments/department.routes.js';
 import categoryRoutes from './modules/categories/category.routes.js';
 import employeeRoutes from './modules/employees/employee.routes.js';
 import assetRoutes from './modules/assets/asset.routes.js';
+import assetRequestRoutes from './modules/asset-requests/asset-requests.routes.js';
 import { allocationRouter, transferRouter } from './modules/allocations/allocation.routes.js';
 import bookingRoutes from './modules/bookings/booking.routes.js';
 import maintenanceRoutes from './modules/maintenance/maintenance.routes.js';
@@ -45,6 +46,7 @@ app.use('/api/v1/employees', employeeRoutes);
 
 // Module C: Asset Registry
 app.use('/api/v1/assets', assetRoutes);
+app.use('/api/v1/asset-requests', assetRequestRoutes);
 
 // Module D: Asset Allocations & Transfers
 app.use('/api/v1/allocations', allocationRouter);

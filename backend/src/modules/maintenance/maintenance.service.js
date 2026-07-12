@@ -96,6 +96,12 @@ export const updateMaintenanceStatus = async (requestId, data, approvedById) => 
   if (data.technicianName) {
     updateData.technicianName = data.technicianName;
   }
+  if (data.startDate) {
+    updateData.startDate = new Date(data.startDate);
+  }
+  if (data.endDate) {
+    updateData.endDate = new Date(data.endDate);
+  }
 
   const result = await prisma.$transaction(async (tx) => {
     const updated = await tx.maintenanceRequest.update({
@@ -113,6 +119,40 @@ export const updateMaintenanceStatus = async (requestId, data, approvedById) => 
         where: { id: request.assetId },
         data: { status: 'under_maintenance' },
       });
+
+      // Find overlapping bookings if we have a duration
+      if (updateData.startDate && updateData.endDate) {
+        const overlappingBookings = await tx.resourceBooking.findMany({
+          where: {
+            assetId: request.assetId,
+            status: { in: ['upcoming', 'ongoing'] },
+            startTime: { lt: updateData.endDate },
+            endTime: { gt: updateData.startDate },
+          },
+        });
+
+        if (overlappingBookings.length > 0) {
+          // Cancel them
+          await tx.resourceBooking.updateMany({
+            where: { id: { in: overlappingBookings.map(b => b.id) } },
+            data: { status: 'cancelled' },
+          });
+
+          // Notify users
+          for (const b of overlappingBookings) {
+            await tx.notification.create({
+              data: {
+                userId: b.userId,
+                title: 'Booking Cancelled (Maintenance)',
+                message: `Your booking for "${request.asset.name}" has been cancelled because the asset was placed under maintenance.`,
+                type: 'BOOKING_CANCELLED_MAINTENANCE',
+                referenceId: b.id,
+                referenceType: 'booking',
+              },
+            });
+          }
+        }
+      }
     }
 
     // Notify the requester

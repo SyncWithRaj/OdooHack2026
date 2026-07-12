@@ -196,12 +196,15 @@ export const approveTransfer = async (transferId, approver) => {
   });
 
   if (!transfer) throw new AppError('Transfer request not found.', 404);
-  if (transfer.status !== 'requested') {
+  if (transfer.status === 'approved' || transfer.status === 'rejected') {
     throw new AppError(`Transfer is already ${transfer.status}.`, 400);
   }
 
-  // Department Head scoped check — can only approve transfers for their department
+  // Department Head scoping and two-step logic
   if (approver.role === 'department_head') {
+    if (transfer.status !== 'requested') {
+      throw new AppError(`Department Head can only approve 'requested' transfers.`, 400);
+    }
     const currentDeptId =
       transfer.currentAllocation.assignedToDeptId ||
       transfer.currentAllocation.assignedToUser?.departmentId;
@@ -212,74 +215,94 @@ export const approveTransfer = async (transferId, approver) => {
         403
       );
     }
+
+    // Move to pending_asset_manager
+    const updatedTransfer = await prisma.transferRequest.update({
+      where: { id: transferId },
+      data: {
+        status: 'pending_asset_manager',
+        deptHeadApprovedById: approver.id,
+      },
+    });
+
+    return updatedTransfer;
   }
 
-  const result = await prisma.$transaction(async (tx) => {
-    // 1) Close old allocation
-    await tx.allocation.update({
-      where: { id: transfer.currentAllocationId },
-      data: { status: 'returned', actualReturnDate: new Date() },
-    });
+  // Admin / Asset Manager final approval
+  if (approver.role === 'asset_manager' || approver.role === 'admin') {
+    const result = await prisma.$transaction(async (tx) => {
+      // 1) Close old allocation
+      await tx.allocation.update({
+        where: { id: transfer.currentAllocationId },
+        data: { status: 'returned', actualReturnDate: new Date() },
+      });
 
-    // 2) Create new allocation for the target
-    const newAllocation = await tx.allocation.create({
-      data: {
-        assetId: transfer.assetId,
-        assignedToUserId: transfer.targetUserId || null,
-        assignedToDeptId: transfer.targetDeptId || null,
-        allocatedById: approver.id,
-      },
-    });
-
-    // 3) Update transfer status
-    const updatedTransfer = await tx.transferRequest.update({
-      where: { id: transferId },
-      data: { status: 'approved', approvedById: approver.id },
-      include: {
-        asset: { select: { id: true, name: true, assetTag: true } },
-        targetUser: { select: { id: true, name: true, email: true } },
-        targetDept: { select: { id: true, name: true } },
-      },
-    });
-
-    // 4) Notify the requester
-    await tx.notification.create({
-      data: {
-        userId: transfer.requestedByUserId,
-        title: 'Transfer Approved',
-        message: `Transfer request for asset "${transfer.asset.name}" has been approved.`,
-        type: 'TRANSFER_APPROVED',
-        referenceId: transferId,
-        referenceType: 'transfer',
-      },
-    });
-
-    // 5) Notify the target user + email
-    if (transfer.targetUserId) {
-      await tx.notification.create({
+      // 2) Create new allocation for the target
+      const newAllocation = await tx.allocation.create({
         data: {
-          userId: transfer.targetUserId,
-          title: 'Asset Assigned via Transfer',
-          message: `Asset "${transfer.asset.name}" has been transferred to you.`,
-          type: 'ASSET_ASSIGNED',
-          referenceId: newAllocation.id,
-          referenceType: 'allocation',
+          assetId: transfer.assetId,
+          assignedToUserId: transfer.targetUserId || null,
+          assignedToDeptId: transfer.targetDeptId || null,
+          allocatedById: approver.id,
         },
       });
 
-      if (updatedTransfer.targetUser?.email) {
-        sendNotificationEmail(
-          updatedTransfer.targetUser.email,
-          'Asset Transferred to You',
-          `Asset "${transfer.asset.name}" (${transfer.asset.assetTag}) has been transferred to you.`
-        ).catch(() => {});
+      // 3) Update transfer status
+      const updatedTransfer = await tx.transferRequest.update({
+        where: { id: transferId },
+        data: { 
+          status: 'approved', 
+          approvedById: approver.id,
+          assetManagerApprovedById: approver.id
+        },
+        include: {
+          asset: { select: { id: true, name: true, assetTag: true } },
+          targetUser: { select: { id: true, name: true, email: true } },
+          targetDept: { select: { id: true, name: true } },
+        },
+      });
+
+      // 4) Notify the requester
+      await tx.notification.create({
+        data: {
+          userId: transfer.requestedByUserId,
+          title: 'Transfer Approved',
+          message: `Transfer request for asset "${transfer.asset.name}" has been fully approved.`,
+          type: 'TRANSFER_APPROVED',
+          referenceId: transferId,
+          referenceType: 'transfer',
+        },
+      });
+
+      // 5) Notify the target user + email
+      if (transfer.targetUserId) {
+        await tx.notification.create({
+          data: {
+            userId: transfer.targetUserId,
+            title: 'Asset Assigned via Transfer',
+            message: `Asset "${transfer.asset.name}" has been transferred to you.`,
+            type: 'ASSET_ASSIGNED',
+            referenceId: newAllocation.id,
+            referenceType: 'allocation',
+          },
+        });
+
+        if (updatedTransfer.targetUser?.email) {
+          sendNotificationEmail(
+            updatedTransfer.targetUser.email,
+            'Asset Transferred to You',
+            `Asset "${transfer.asset.name}" (${transfer.asset.assetTag}) has been transferred to you.`
+          ).catch(() => {});
+        }
       }
-    }
 
-    return updatedTransfer;
-  });
+      return updatedTransfer;
+    });
 
-  return result;
+    return result;
+  }
+
+  throw new AppError('Unauthorized role for transfer approval.', 403);
 };
 
 /**
@@ -301,7 +324,7 @@ export const rejectTransfer = async (transferId, rejectionReason, approver) => {
   });
 
   if (!transfer) throw new AppError('Transfer request not found.', 404);
-  if (transfer.status !== 'requested') {
+  if (transfer.status === 'approved' || transfer.status === 'rejected') {
     throw new AppError(`Transfer is already ${transfer.status}.`, 400);
   }
 

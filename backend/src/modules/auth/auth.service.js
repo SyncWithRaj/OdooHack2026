@@ -306,6 +306,57 @@ export const resetPassword = async (email, otp, newPassword) => {
 };
 
 // ============================================================================
+// CHANGE PASSWORD — Requires current password + new password
+// ============================================================================
+
+export const changePassword = async (userId, currentPassword, newPassword) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError('User not found.', 404);
+
+  const isPasswordCorrect = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!isPasswordCorrect) throw new AppError('Current password is incorrect.', 401);
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+  
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash }
+  });
+
+  await prisma.activityLog.create({
+    data: { userId: user.id, action: 'PASSWORD_CHANGED', entityType: 'user', entityId: user.id },
+  }).catch(() => {});
+
+  return { message: 'Password has been changed successfully.' };
+};
+
+// ============================================================================
+// UPDATE PROFILE
+// ============================================================================
+
+export const updateProfile = async (userId, data) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError('User not found.', 404);
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { name: data.name },
+    select: {
+      id: true, name: true, email: true, role: true,
+      departmentId: true, status: true, isEmailVerified: true,
+      createdAt: true, updatedAt: true,
+      department: { select: { id: true, name: true, code: true } },
+    }
+  });
+
+  await prisma.activityLog.create({
+    data: { userId: user.id, action: 'PROFILE_UPDATED', entityType: 'user', entityId: user.id },
+  }).catch(() => {});
+
+  return updatedUser;
+};
+
+// ============================================================================
 // GET ME
 // ============================================================================
 

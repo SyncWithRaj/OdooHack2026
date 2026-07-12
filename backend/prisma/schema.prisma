@@ -40,10 +40,12 @@ enum AllocationStatus {
 }
 
 enum BookingStatus {
+  pending
   upcoming
   ongoing
   completed
   cancelled
+  rejected
 }
 
 enum MaintenanceStatus {
@@ -76,8 +78,17 @@ enum AuditItemVerification {
 
 enum TransferStatus {
   requested
+  pending_asset_manager
   approved
   rejected
+}
+
+enum AssetRequestStatus {
+  pending_dept_head
+  pending_asset_manager
+  approved
+  rejected
+  allocated
 }
 
 // ============================================================================
@@ -138,6 +149,10 @@ model User {
   discrepanciesResolved DiscrepancyReport[] @relation("DiscrepancyResolver")
   notifications       Notification[]
   activityLogs        ActivityLog[]
+  assetRequests       AssetRequest[]       @relation("AssetRequester")
+  assetRequestsApproved AssetRequest[]     @relation("AssetRequestApprover")
+  transfersDeptHeadApproved TransferRequest[] @relation("TransferDeptHeadApprover")
+  transfersAssetManagerApproved TransferRequest[] @relation("TransferAssetManagerApprover")
 
   @@index([email], map: "idx_users_email")
   @@index([departmentId], map: "idx_users_dept")
@@ -151,9 +166,33 @@ model AssetCategory {
   metadataSchema Json?    @map("metadata_schema")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  assets Asset[]
+  assets         Asset[]
+  assetRequests  AssetRequest[]
 
   @@map("asset_categories")
+}
+
+// ============================================================================
+// ASSET REQUESTS
+// ============================================================================
+
+model AssetRequest {
+  id                Int                @id @default(autoincrement())
+  requestedByUserId Int                @map("requested_by_user_id")
+  categoryId        Int                @map("category_id")
+  justification     String             @db.Text
+  status            AssetRequestStatus @default(pending_dept_head)
+  approvedById      Int?               @map("approved_by_id")
+  rejectionReason   String?            @map("rejection_reason") @db.Text
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  requestedBy       User          @relation("AssetRequester", fields: [requestedByUserId], references: [id])
+  category          AssetCategory @relation(fields: [categoryId], references: [id])
+  approvedBy        User?         @relation("AssetRequestApprover", fields: [approvedById], references: [id])
+
+  @@map("asset_requests")
 }
 
 // ============================================================================
@@ -227,6 +266,8 @@ model TransferRequest {
   targetUserId        Int?           @map("target_user_id")
   targetDeptId        Int?           @map("target_dept_id")
   status              TransferStatus @default(requested)
+  deptHeadApprovedById     Int?      @map("dept_head_approved_by_id")
+  assetManagerApprovedById Int?      @map("asset_manager_approved_by_id")
   approvedById        Int?           @map("approved_by_id")
   rejectionReason     String?        @map("rejection_reason") @db.Text
   createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz
@@ -239,6 +280,8 @@ model TransferRequest {
   targetUser         User?      @relation("TransferTarget", fields: [targetUserId], references: [id])
   targetDept         Department? @relation("TransferTargetDept", fields: [targetDeptId], references: [id])
   approvedBy         User?      @relation("TransferApprover", fields: [approvedById], references: [id])
+  deptHeadApprovedBy User?      @relation("TransferDeptHeadApprover", fields: [deptHeadApprovedById], references: [id])
+  assetManagerApprovedBy User?  @relation("TransferAssetManagerApprover", fields: [assetManagerApprovedById], references: [id])
 
   @@map("transfer_requests")
 }
@@ -253,7 +296,7 @@ model ResourceBooking {
   userId    Int           @map("user_id")
   startTime DateTime      @map("start_time") @db.Timestamp
   endTime   DateTime      @map("end_time") @db.Timestamp
-  status    BookingStatus @default(upcoming)
+  status    BookingStatus @default(pending)
   createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz
 
   // Relations
@@ -277,6 +320,8 @@ model MaintenanceRequest {
   status          MaintenanceStatus   @default(pending)
   photoUrl        String?             @map("photo_url") @db.VarChar(500)
   technicianName  String?             @map("technician_name") @db.VarChar(255)
+  startDate       DateTime?           @map("start_date") @db.Timestamptz
+  endDate         DateTime?           @map("end_date") @db.Timestamptz
   resolutionNotes String?             @map("resolution_notes") @db.Text
   approvedById    Int?                @map("approved_by_id")
   resolvedAt      DateTime?           @map("resolved_at") @db.Timestamptz

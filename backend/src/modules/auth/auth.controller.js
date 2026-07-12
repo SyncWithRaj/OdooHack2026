@@ -92,6 +92,33 @@ export const getMe = catchAsync(async (req, res) => {
 });
 
 /**
+ * PATCH /api/v1/auth/update-profile — Protected
+ */
+export const updateProfile = catchAsync(async (req, res) => {
+  const { name } = req.body;
+  const user = await authService.updateProfile(req.user.id, { name });
+
+  res.status(200).json({
+    success: true,
+    message: 'Profile updated successfully',
+    data: { user },
+  });
+});
+
+/**
+ * PATCH /api/v1/auth/change-password — Protected
+ */
+export const changePassword = catchAsync(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const result = await authService.changePassword(req.user.id, currentPassword, newPassword);
+
+  res.status(200).json({
+    success: true,
+    message: result.message,
+  });
+});
+
+/**
  * POST /api/v1/auth/forgot-password — Public
  */
 export const forgotPassword = catchAsync(async (req, res) => {

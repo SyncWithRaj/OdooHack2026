@@ -36,6 +36,13 @@ export default function MaintenanceTab({ user, refreshAssets }) {
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [submittingResolve, setSubmittingResolve] = useState(false);
 
+  // Approve Modal State
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+  const [approveRequestId, setApproveRequestId] = useState(null);
+  const [approveStartDate, setApproveStartDate] = useState('');
+  const [approveEndDate, setApproveEndDate] = useState('');
+  const [submittingApprove, setSubmittingApprove] = useState(false);
+
   const fetchMaintenanceData = async () => {
     try {
       setLoading(true);
@@ -140,6 +147,28 @@ export default function MaintenanceTab({ user, refreshAssets }) {
     }
   };
 
+  const handleApproveSubmit = async (e) => {
+    e.preventDefault();
+    if (!approveStartDate || !approveEndDate) {
+      toast.error('Please specify the maintenance duration');
+      return;
+    }
+    
+    try {
+      setSubmittingApprove(true);
+      await handleStatusTransition(approveRequestId, 'approved', { 
+        startDate: approveStartDate, 
+        endDate: approveEndDate 
+      });
+      setIsApproveModalOpen(false);
+      setApproveRequestId(null);
+      setApproveStartDate('');
+      setApproveEndDate('');
+    } finally {
+      setSubmittingApprove(false);
+    }
+  };
+
   const isManager = ['admin', 'asset_manager'].includes(user?.role);
 
   const filteredRequests = requests.filter(req => 
@@ -210,7 +239,10 @@ export default function MaintenanceTab({ user, refreshAssets }) {
               <>
                 <Button
                   variant="secondary"
-                  onClick={() => handleStatusTransition(row.id, 'approved')}
+                  onClick={() => {
+                    setApproveRequestId(row.id);
+                    setIsApproveModalOpen(true);
+                  }}
                   icon={Check}
                   className="!p-1.5 !px-3 hover:!bg-status-available/10 hover:!text-status-available text-xs font-semibold border-status-available/20"
                 >
@@ -459,6 +491,55 @@ export default function MaintenanceTab({ user, refreshAssets }) {
               Cancel
             </Button>
             <Button variant="primary" type="submit" loading={submittingResolve}>Resolve Ticket</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Approve Maintenance Modal */}
+      <Modal
+        isOpen={isApproveModalOpen}
+        onClose={() => {
+          setIsApproveModalOpen(false);
+          setApproveRequestId(null);
+          setApproveStartDate('');
+          setApproveEndDate('');
+        }}
+        title="Approve Maintenance & Set Duration"
+      >
+        <form onSubmit={handleApproveSubmit} className="flex flex-col gap-4">
+          <p className="text-sm text-steel mb-2">
+            Setting the duration will automatically cancel any existing bookings that overlap with this maintenance window.
+          </p>
+          <FormField
+            label="Start Date"
+            id="approve-start-date"
+            type="datetime-local"
+            required
+            value={approveStartDate}
+            onChange={(e) => setApproveStartDate(e.target.value)}
+          />
+          <FormField
+            label="End Date"
+            id="approve-end-date"
+            type="datetime-local"
+            required
+            value={approveEndDate}
+            onChange={(e) => setApproveEndDate(e.target.value)}
+          />
+
+          <div className="flex justify-end gap-3 mt-4 border-t border-hairline pt-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                setIsApproveModalOpen(false);
+                setApproveRequestId(null);
+                setApproveStartDate('');
+                setApproveEndDate('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" loading={submittingApprove}>Approve Maintenance</Button>
           </div>
         </form>
       </Modal>

@@ -76,11 +76,16 @@ export default function TransfersTab({ user }) {
   };
 
   const isEligibleToApprove = (transfer) => {
-    if (['admin', 'asset_manager'].includes(user.role)) return true;
-    if (user.role === 'department_head') {
-      // Scoped check for department heads
-      // If the target department matches head's department or requester is in head's department
-      return transfer.targetDeptId === user.departmentId || transfer.targetUser?.departmentId === user.departmentId;
+    if (transfer.status === 'requested') {
+      // Department Head approval step
+      if (user.role === 'department_head') {
+        return transfer.targetDeptId === user.departmentId || transfer.targetUser?.departmentId === user.departmentId || transfer.currentAllocation?.assignedToDeptId === user.departmentId || transfer.currentAllocation?.assignedToUser?.departmentId === user.departmentId;
+      }
+    } else if (transfer.status === 'pending_asset_manager') {
+      // Asset Manager / Admin approval step
+      if (['admin', 'asset_manager'].includes(user.role)) {
+        return true;
+      }
     }
     return false;
   };
@@ -149,7 +154,7 @@ export default function TransfersTab({ user }) {
       key: 'actions',
       label: '',
       render: (row) => {
-        if (row.status === 'requested' && isEligibleToApprove(row)) {
+        if ((row.status === 'requested' || row.status === 'pending_asset_manager') && isEligibleToApprove(row)) {
           return (
             <div className="flex justify-end gap-2">
               <Button

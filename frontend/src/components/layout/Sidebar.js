@@ -9,7 +9,10 @@ import {
   Building2,
   Tags,
   ArrowRightLeft,
-  CalendarDays
+  CalendarDays,
+  BarChart3,
+  Activity,
+  User as UserIcon
 } from 'lucide-react';
 
 const getNavigation = (role) => {
@@ -24,12 +27,14 @@ const getNavigation = (role) => {
     { id: 'departments', name: 'Departments', icon: Building2, roles: ['admin'] },
     { id: 'categories', name: 'Categories', icon: Tags, roles: ['admin'] },
     { id: 'audits', name: 'Audits', icon: ClipboardCheck, roles: ['admin', 'asset_manager'] },
+    { id: 'analytics', name: 'Analytics & Reports', icon: BarChart3, roles: ['admin', 'asset_manager'] },
+    { id: 'activity-logs', name: 'Activity Logs', icon: Activity, roles: ['admin'] },
   ];
 
   return routes.filter(route => route.roles.includes(role || 'employee'));
 };
 
-export default function Sidebar({ role, activeTab, setActiveTab }) {
+export default function Sidebar({ user, role, activeTab, setActiveTab }) {
   const navigation = getNavigation(role);
 
   return (
@@ -75,12 +80,22 @@ export default function Sidebar({ role, activeTab, setActiveTab }) {
         </nav>
       </div>
 
-      {/* Footer Info */}
-      <div className="p-4 border-t border-hairline/15 bg-white/2">
-        <div className="flex items-center justify-between text-[10px] text-steel font-semibold tracking-wider uppercase">
-          <span>Module status</span>
-          <span className="text-status-available animate-pulse">● online</span>
-        </div>
+      {/* Footer Profile Button */}
+      <div className="p-4 border-t border-hairline/15 bg-white/5">
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`w-full flex items-center gap-3 p-2 rounded-md transition-colors text-left hover:bg-white/10 ${activeTab === 'profile' ? 'bg-white/10 ring-1 ring-accent/50' : ''}`}
+        >
+          <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 text-accent">
+            <UserIcon className="w-4 h-4" />
+          </div>
+          <div className="flex flex-col overflow-hidden">
+            <span className="text-sm font-bold text-white truncate">{user?.name || 'User'}</span>
+            <span className="text-[10px] text-steel font-semibold tracking-wider uppercase truncate">
+              {user?.role?.replace('_', ' ') || 'Role'}
+            </span>
+          </div>
+        </button>
       </div>
     </div>
   );

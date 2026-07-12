@@ -105,6 +105,28 @@ export default function BookingsTab({ user }) {
     }
   };
 
+  const handleApproveBooking = async (id) => {
+    try {
+      await api.patch(`/bookings/${id}/approve`);
+      toast.success('Booking approved successfully');
+      fetchBookingsData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to approve booking. It might conflict with another slot.');
+    }
+  };
+
+  const handleRejectBooking = async (id) => {
+    const confirmReject = window.confirm('Are you sure you want to reject this booking?');
+    if (!confirmReject) return;
+    try {
+      await api.patch(`/bookings/${id}/reject`);
+      toast.success('Booking rejected successfully');
+      fetchBookingsData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reject booking');
+    }
+  };
+
   // Build a nice TimeSlotGrid for the selected asset
   const getAssetBookingsForToday = () => {
     if (!selectedAssetId) return [];
@@ -169,10 +191,32 @@ export default function BookingsTab({ user }) {
       key: 'actions',
       label: '',
       render: (row) => {
-        const canCancel = row.status === 'upcoming' && (row.userId === user.id || ['admin', 'asset_manager'].includes(user.role));
-        if (canCancel) {
-          return (
-            <div className="flex justify-end">
+        const canCancel = (row.status === 'upcoming' || row.status === 'pending') && (row.userId === user.id || ['admin', 'asset_manager'].includes(user.role));
+        const canApproveReject = row.status === 'pending' && ['admin', 'asset_manager'].includes(user.role);
+
+        return (
+          <div className="flex justify-end gap-2">
+            {canApproveReject && (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={() => handleApproveBooking(row.id)}
+                  icon={Check}
+                  className="!p-1.5 !px-3 hover:!bg-status-available/10 hover:!text-status-available text-xs font-semibold border-status-available/20"
+                >
+                  Approve
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => handleRejectBooking(row.id)}
+                  icon={X}
+                  className="!p-1.5 !px-3 hover:!bg-status-lost/10 hover:!text-status-lost text-xs font-semibold border-status-lost/20"
+                >
+                  Reject
+                </Button>
+              </>
+            )}
+            {canCancel && !canApproveReject && (
               <Button
                 variant="ghost"
                 onClick={() => handleCancelBooking(row.id)}
@@ -181,10 +225,9 @@ export default function BookingsTab({ user }) {
               >
                 Cancel
               </Button>
-            </div>
-          );
-        }
-        return null;
+            )}
+          </div>
+        );
       }
     }
   ];

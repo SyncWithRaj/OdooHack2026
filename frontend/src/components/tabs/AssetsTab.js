@@ -11,8 +11,10 @@ import FormField from '../shared/FormField';
 import Modal from '../shared/Modal';
 import DataTable from '../shared/DataTable';
 import Timeline from '../shared/Timeline';
+import AssetRequestsTab from './AssetRequestsTab';
 
-export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets }) {
+export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets, setActiveTab }) {
+  const [viewMode, setViewMode] = useState('assets'); // 'assets' or 'requests'
   const [assets, setAssets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -297,7 +299,13 @@ export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets })
           >
             Refresh
           </Button>
-          {isManager && (
+          <Button
+            variant={viewMode === 'requests' ? "primary" : "secondary"}
+            onClick={() => setViewMode(viewMode === 'assets' ? 'requests' : 'assets')}
+          >
+            {viewMode === 'assets' ? 'View Requests' : 'Back to Directory'}
+          </Button>
+          {isManager && viewMode === 'assets' && (
             <Button
               variant="primary"
               onClick={() => setIsRegisterModalOpen(true)}
@@ -309,7 +317,13 @@ export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets })
         </div>
       </div>
 
-      {/* Toolbar / Filters */}
+      {viewMode === 'requests' ? (
+        <div className="-mt-4">
+          <AssetRequestsTab user={user} assetsTriggerRefresh={assetsTriggerRefresh} refreshAssets={refreshAssets} setActiveTab={setActiveTab} />
+        </div>
+      ) : (
+        <>
+          {/* Toolbar / Filters */}
       <div className="flex flex-col gap-4 p-4 bg-white border border-hairline rounded-lg shadow-sm">
         <div className="flex gap-3">
           <div className="relative flex-1">
@@ -664,6 +678,8 @@ export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets })
           </div>
         )}
       </Modal>
+        </>
+      )}
     </div>
   );
 }
