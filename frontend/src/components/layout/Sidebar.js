@@ -33,12 +33,21 @@ export default function Sidebar({ role, activeTab, setActiveTab }) {
   const navigation = getNavigation(role);
 
   return (
-    <div className="flex flex-col w-64 bg-white border-r border-gray-200 h-screen fixed">
-      <div className="flex items-center justify-center h-16 border-b border-gray-200 px-4">
-        <span className="text-2xl font-bold text-blue-600 tracking-tight">AssetFlow</span>
+    <div className="flex flex-col w-64 bg-ink border-r border-hairline h-screen fixed select-none z-30">
+      {/* Brand Logo Header */}
+      <div className="flex items-center gap-2 h-16 border-b border-hairline/15 px-6">
+        {/* Stamped physical look element */}
+        <div className="w-5 h-5 bg-accent rounded-[4px] flex items-center justify-center font-bold text-accent-ink text-[11px] font-mono shadow-sm">
+          A
+        </div>
+        <span className="text-lg font-bold font-display text-white tracking-widest uppercase">
+          Asset<span className="text-accent font-light">Flow</span>
+        </span>
       </div>
-      <div className="flex-1 overflow-y-auto py-4">
-        <nav className="px-3 space-y-1">
+      
+      {/* Navigation Links */}
+      <div className="flex-1 overflow-y-auto py-6">
+        <nav className="px-4 space-y-1.5">
           {navigation.map((item) => {
             const isActive = activeTab === item.id;
             return (
@@ -46,16 +55,16 @@ export default function Sidebar({ role, activeTab, setActiveTab }) {
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`
-                  w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors text-left
+                  w-full group flex items-center px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-md transition-all duration-150 text-left
                   ${isActive 
-                    ? 'bg-blue-50 text-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}
+                    ? 'bg-accent text-accent-ink shadow-md' 
+                    : 'text-steel hover:text-white hover:bg-white/5'}
                 `}
               >
                 <item.icon
                   className={`
-                    flex-shrink-0 -ml-1 mr-3 h-5 w-5
-                    ${isActive ? 'text-blue-700' : 'text-gray-400 group-hover:text-gray-500'}
+                    flex-shrink-0 mr-3 h-4.5 w-4.5 transition-colors
+                    ${isActive ? 'text-accent-ink' : 'text-steel group-hover:text-white'}
                   `}
                   aria-hidden="true"
                 />
@@ -64,6 +73,14 @@ export default function Sidebar({ role, activeTab, setActiveTab }) {
             );
           })}
         </nav>
+      </div>
+
+      {/* Footer Info */}
+      <div className="p-4 border-t border-hairline/15 bg-white/2">
+        <div className="flex items-center justify-between text-[10px] text-steel font-semibold tracking-wider uppercase">
+          <span>Module status</span>
+          <span className="text-status-available animate-pulse">● online</span>
+        </div>
       </div>
     </div>
   );
