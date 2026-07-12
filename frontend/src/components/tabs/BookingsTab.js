@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
-import { Search, RefreshCw, Calendar, Plus, X, AlertCircle, Clock, Info } from 'lucide-react';
+import { Search, RefreshCw, Calendar, Plus, X, AlertCircle, Clock, Info, Check } from 'lucide-react';
 import AssetTagChip from '../shared/AssetTagChip';
 import StatusBadge from '../shared/StatusBadge';
 import Button from '../shared/Button';

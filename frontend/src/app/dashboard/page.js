@@ -48,7 +48,7 @@ export default function DashboardPage() {
       let fetchedNotifs = res.data.data.notifications || [];
       
       // If no real notifications, fallback to recent 10 activity logs for the UI
-      if (fetchedNotifs.length === 0) {
+      if (fetchedNotifs.length === 0 && user?.role === 'admin') {
         const logsRes = await api.get('/analytics/logs', { params: { limit: 10 } });
         fetchedNotifs = (logsRes.data.data.logs || []).map(log => ({
           id: `log-${log.id}`,

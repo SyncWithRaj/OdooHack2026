@@ -18,6 +18,7 @@ export default function AllocationsTab({ user, refreshAssets }) {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const isManager = ['admin', 'asset_manager'].includes(user?.role);
 
   // Allocate Modal state
   const [isAllocateModalOpen, setIsAllocateModalOpen] = useState(false);
@@ -53,11 +54,13 @@ export default function AllocationsTab({ user, refreshAssets }) {
       const assetsRes = await api.get('/assets');
       setAssets(assetsRes.data.data.assets || []);
 
-      const empRes = await api.get('/employees');
-      setEmployees(empRes.data.data.employees || []);
+      if (isManager) {
+        const empRes = await api.get('/employees');
+        setEmployees(empRes.data.data.employees || []);
 
-      const deptRes = await api.get('/departments');
-      setDepartments(deptRes.data.data.departments || []);
+        const deptRes = await api.get('/departments');
+        setDepartments(deptRes.data.data.departments || []);
+      }
     } catch (err) {
       console.error(err);
       toast.error('Failed to load allocations directory');
@@ -170,7 +173,6 @@ export default function AllocationsTab({ user, refreshAssets }) {
   };
 
   const conflict = getSelectedAssetConflict();
-  const isManager = ['admin', 'asset_manager'].includes(user?.role);
 
   const filteredAllocations = allocations.filter(alloc => 
     alloc.asset.name.toLowerCase().includes(search.toLowerCase()) ||
