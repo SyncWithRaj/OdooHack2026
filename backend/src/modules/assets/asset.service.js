@@ -6,28 +6,43 @@ import { generateAssetTag } from '../../utils/assetTagGenerator.js';
  * Register a new asset with auto-generated tracking tag.
  */
 export const createAsset = async (data) => {
-  const assetTag = await generateAssetTag();
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      const assetTag = await generateAssetTag();
 
-  const asset = await prisma.asset.create({
-    data: {
-      name: data.name,
-      assetTag,
-      serialNumber: data.serialNumber || null,
-      categoryId: data.categoryId,
-      condition: data.condition || 'New',
-      location: data.location || null,
-      acquisitionDate: data.acquisitionDate ? new Date(data.acquisitionDate) : null,
-      acquisitionCost: data.acquisitionCost || null,
-      photoUrl: data.photoUrl || null,
-      documents: data.documents || null,
-      isBookable: data.isBookable || false,
-    },
-    include: {
-      category: { select: { id: true, name: true } },
-    },
-  });
+      const asset = await prisma.asset.create({
+        data: {
+          name: data.name,
+          assetTag,
+          serialNumber: data.serialNumber || null,
+          categoryId: data.categoryId,
+          condition: data.condition || 'New',
+          location: data.location || null,
+          acquisitionDate: data.acquisitionDate ? new Date(data.acquisitionDate) : null,
+          acquisitionCost: data.acquisitionCost || null,
+          photoUrl: data.photoUrl || null,
+          documents: data.documents || null,
+          isBookable: data.isBookable || false,
+        },
+        include: {
+          category: { select: { id: true, name: true } },
+        },
+      });
 
-  return asset;
+      return asset;
+    } catch (error) {
+      if (error.code === 'P2002' && error.meta && (error.meta.target.includes('asset_tag') || error.meta.target.includes('assetTag'))) {
+        retries -= 1;
+        if (retries === 0) {
+          throw new AppError('Failed to generate a unique asset tag after multiple attempts. Please try again.', 500);
+        }
+        // Retry loop will generate a new tag
+      } else {
+        throw error;
+      }
+    }
+  }
 };
 
 /**

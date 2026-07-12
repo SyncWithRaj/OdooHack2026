@@ -17,5 +17,18 @@ export async function generateAssetTag() {
     }
   }
 
-  return `AF-${String(nextNumber).padStart(4, '0')}`;
+  let isUnique = false;
+  let tag = '';
+  
+  while (!isUnique) {
+    tag = `AF-${String(nextNumber).padStart(4, '0')}`;
+    const existing = await prisma.asset.findUnique({ where: { assetTag: tag } });
+    if (existing) {
+      nextNumber++;
+    } else {
+      isUnique = true;
+    }
+  }
+
+  return tag;
 }
