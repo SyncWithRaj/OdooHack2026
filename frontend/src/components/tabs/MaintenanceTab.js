@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
-import { Search, RefreshCw, Plus, Wrench, Check, X, UserCheck, Play, ClipboardCheck } from 'lucide-react';
+import { Search, RefreshCw, Plus, Wrench, Check, X, UserCheck, Play, ClipboardCheck, AlertTriangle } from 'lucide-react';
 import AssetTagChip from '../shared/AssetTagChip';
 import StatusBadge from '../shared/StatusBadge';
 import Button from '../shared/Button';
 import FormField from '../shared/FormField';
 import Modal from '../shared/Modal';
 import DataTable from '../shared/DataTable';
+import WorkflowPipeline from '../shared/WorkflowPipeline';
 
 export default function MaintenanceTab({ user, refreshAssets }) {
   const [requests, setRequests] = useState([]);
@@ -316,6 +317,37 @@ export default function MaintenanceTab({ user, refreshAssets }) {
     }
   ];
 
+  const maintenanceSteps = [
+    {
+      id: 'reported',
+      label: 'Reported',
+      description: 'Issue reported to system',
+      status: 'completed',
+      icon: AlertTriangle
+    },
+    {
+      id: 'approved',
+      label: 'Approved',
+      description: 'Work order approved',
+      status: 'completed',
+      icon: Check
+    },
+    {
+      id: 'in_progress',
+      label: 'In Progress',
+      description: 'Tech assigned & repairing',
+      status: 'current',
+      icon: Wrench
+    },
+    {
+      id: 'resolved',
+      label: 'Resolved',
+      description: 'Asset returned to service',
+      status: 'upcoming',
+      icon: ClipboardCheck
+    }
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -342,6 +374,12 @@ export default function MaintenanceTab({ user, refreshAssets }) {
             Request Maintenance
           </Button>
         </div>
+      </div>
+
+      {/* Workflow Visualization */}
+      <div className="flex flex-col gap-3">
+        <h3 className="text-xs font-bold font-mono text-steel uppercase tracking-wider">Maintenance Repair Pipeline</h3>
+        <WorkflowPipeline steps={maintenanceSteps} />
       </div>
 
       {/* Search toolbar */}

@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
-import { Search, RefreshCw, ArrowRightLeft, Check, X, ShieldAlert } from 'lucide-react';
+import { Search, RefreshCw, ArrowRightLeft, Check, X, ShieldAlert, Building2, ClipboardCheck, CheckCircle2 } from 'lucide-react';
 import AssetTagChip from '../shared/AssetTagChip';
 import StatusBadge from '../shared/StatusBadge';
 import Button from '../shared/Button';
 import FormField from '../shared/FormField';
 import Modal from '../shared/Modal';
 import DataTable from '../shared/DataTable';
+import WorkflowPipeline from '../shared/WorkflowPipeline';
 
 export default function TransfersTab({ user }) {
   const [transfers, setTransfers] = useState([]);
@@ -184,6 +185,37 @@ export default function TransfersTab({ user }) {
     }
   ];
 
+  const transferSteps = [
+    {
+      id: 'requested',
+      label: 'Requested',
+      description: 'Transfer request raised',
+      status: 'completed',
+      icon: ArrowRightLeft
+    },
+    {
+      id: 'dept_head',
+      label: 'Dept Head Review',
+      description: 'Departmental approval step',
+      status: 'current',
+      icon: Building2
+    },
+    {
+      id: 'asset_manager',
+      label: 'Manager Review',
+      description: 'Final allocation check',
+      status: 'upcoming',
+      icon: ClipboardCheck
+    },
+    {
+      id: 'completed',
+      label: 'Re-allocated',
+      description: 'Ownership updated',
+      status: 'upcoming',
+      icon: CheckCircle2
+    }
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       {/* Title Header */}
@@ -203,6 +235,12 @@ export default function TransfersTab({ user }) {
             Refresh
           </Button>
         </div>
+      </div>
+
+      {/* Workflow Visualization */}
+      <div className="flex flex-col gap-3">
+        <h3 className="text-xs font-bold font-mono text-steel uppercase tracking-wider">Transfer Approval Pipeline</h3>
+        <WorkflowPipeline steps={transferSteps} />
       </div>
 
       {/* Toolbar */}

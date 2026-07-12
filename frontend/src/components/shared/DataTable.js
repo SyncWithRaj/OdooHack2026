@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import EmptyState from './EmptyState';
+import { motion } from 'framer-motion';
 
 export default function DataTable({
   columns = [], // { key, label, sortable, render }
@@ -93,14 +94,17 @@ export default function DataTable({
           </thead>
           <tbody className="bg-white divide-y divide-hairline">
             {loading ? (
-              <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center">
-                  <div className="inline-flex items-center justify-center gap-2 text-sm text-steel">
-                    <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                    <span>Loading data...</span>
-                  </div>
-                </td>
-              </tr>
+              [...Array(4)].map((_, i) => (
+                <tr key={`skeleton-row-${i}`} className="animate-pulse">
+                  {columns.map((col, colIdx) => (
+                    <td key={`skeleton-cell-${colIdx}`} className="px-6 py-5">
+                      <div className={`h-4 bg-hairline rounded ${
+                        colIdx === 0 ? 'w-12' : colIdx === 1 ? 'w-32' : 'w-24'
+                      }`} />
+                    </td>
+                  ))}
+                </tr>
+              ))
             ) : sortedData.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="p-0">
@@ -116,8 +120,11 @@ export default function DataTable({
               </tr>
             ) : (
               sortedData.map((row, rowIdx) => (
-                <tr 
+                <motion.tr 
                   key={row.id || rowIdx} 
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: Math.min(rowIdx * 0.03, 0.2) }}
                   className="hover:bg-surface/50 transition-colors duration-150"
                 >
                   {columns.map((col) => (
@@ -125,7 +132,7 @@ export default function DataTable({
                       {col.render ? col.render(row) : row[col.key] ?? '—'}
                     </td>
                   ))}
-                </tr>
+                </motion.tr>
               ))
             )}
           </tbody>

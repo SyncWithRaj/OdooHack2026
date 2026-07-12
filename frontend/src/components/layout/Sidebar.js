@@ -15,6 +15,7 @@ import {
   User as UserIcon,
   Bell
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const getNavigation = (role) => {
   const routes = [
@@ -42,15 +43,20 @@ export default function Sidebar({ user, role, activeTab, setActiveTab, unreadCou
   return (
     <div className="flex flex-col w-64 bg-ink border-r border-hairline h-screen fixed select-none z-30">
       {/* Brand Logo Header */}
-      <div className="flex items-center gap-2 h-16 border-b border-hairline/15 px-6">
+      <button 
+        onClick={() => setActiveTab('overview')}
+        className="flex items-center gap-3 h-16 border-b border-hairline/15 px-6 hover:bg-white/[0.03] transition-colors text-left w-full group/logo focus:outline-none cursor-pointer"
+      >
         {/* Stamped physical look element */}
-        <div className="w-5 h-5 bg-accent rounded-[4px] flex items-center justify-center font-bold text-accent-ink text-[11px] font-mono shadow-sm">
-          A
+        <div className="w-6 h-6 bg-accent rounded-[6px] flex items-center justify-center font-bold text-accent-ink shadow-md shrink-0 group-hover/logo:scale-105 group-hover/logo:shadow-[0_0_12px_rgba(232,163,61,0.3)] transition-all duration-300">
+          <svg className="w-4.5 h-4.5 text-accent-ink stroke-[2]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
         </div>
-        <span className="text-lg font-bold font-display text-white tracking-widest uppercase">
-          Asset<span className="text-accent font-light">Flow</span>
+        <span className="text-base font-black tracking-wider text-white font-display uppercase">
+          ASSET<span className="text-accent font-light">FLOW</span>
         </span>
-      </div>
+      </button>
       
       {/* Navigation Links */}
       <div className="flex-1 overflow-y-auto py-6">
@@ -62,23 +68,30 @@ export default function Sidebar({ user, role, activeTab, setActiveTab, unreadCou
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`
-                  w-full group flex items-center px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-md transition-all duration-150 text-left
+                  w-full group flex items-center px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-md text-left relative overflow-hidden transition-all duration-150
                   ${isActive 
-                    ? 'bg-accent text-accent-ink shadow-md' 
+                    ? 'text-accent-ink shadow-sm' 
                     : 'text-steel hover:text-white hover:bg-white/5'}
                 `}
               >
+                {isActive && (
+                  <motion.div
+                    layoutId="active-sidebar-pill"
+                    className="absolute inset-0 bg-accent -z-10 rounded-md"
+                    transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                  />
+                )}
                 <item.icon
                   className={`
-                    flex-shrink-0 mr-3 h-4.5 w-4.5 transition-colors
+                    flex-shrink-0 mr-3 h-4.5 w-4.5 transition-colors relative z-10
                     ${isActive ? 'text-accent-ink' : 'text-steel group-hover:text-white'}
                   `}
                   aria-hidden="true"
                 />
-                <span className="truncate flex-1">{item.name}</span>
+                <span className="truncate flex-1 relative z-10">{item.name}</span>
                 {item.id === 'notifications' && unreadCount > 0 && (
                   <span className={`
-                    ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full
+                    ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full relative z-10
                     ${isActive ? 'bg-white/20 text-accent-ink' : 'bg-status-lost text-white'}
                   `}>
                     {unreadCount > 99 ? '99+' : unreadCount}
