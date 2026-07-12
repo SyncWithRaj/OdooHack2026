@@ -3,13 +3,13 @@
 import { useEffect, useState } from 'react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
-import { Plus, Search, RefreshCw, Check, X, Package } from 'lucide-react';
+import { Plus, Search, RefreshCw, Check, X, Package, ArrowLeft } from 'lucide-react';
 import Button from '../shared/Button';
 import FormField from '../shared/FormField';
 import Modal from '../shared/Modal';
 import DataTable from '../shared/DataTable';
 
-export default function AssetRequestsTab({ user }) {
+export default function AssetRequestsTab({ user, setActiveTab }) {
   const [requests, setRequests] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -224,6 +224,15 @@ export default function AssetRequestsTab({ user }) {
           </p>
         </div>
         <div className="mt-4 sm:mt-0 flex gap-2">
+          {setActiveTab && (
+            <Button 
+              variant="secondary"
+              onClick={() => setActiveTab('assets')}
+              icon={ArrowLeft}
+            >
+              Back to Assets
+            </Button>
+          )}
           <Button 
             variant="secondary"
             onClick={() => fetchData()}
