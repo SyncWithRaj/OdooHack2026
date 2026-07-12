@@ -87,7 +87,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3 border-l border-gray-200 pl-6">
               <div className="flex flex-col text-right">
                 <span className="text-sm font-medium text-gray-900">{user.name}</span>
-                <span className="text-xs text-gray-500">{user.department?.name || 'Unassigned'}</span>
+                <span className="text-xs text-gray-500 capitalize">{user.role?.replace('_', ' ')}</span>
               </div>
               <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                 <UserIcon className="h-5 w-5" />
