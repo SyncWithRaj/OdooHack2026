@@ -24,6 +24,7 @@ import TransfersTab from '../../components/tabs/TransfersTab';
 import BookingsTab from '../../components/tabs/BookingsTab';
 import AnalyticsTab from '../../components/tabs/AnalyticsTab';
 import ActivityLogsTab from '../../components/tabs/ActivityLogsTab';
+import ProfileTab from '../../components/tabs/ProfileTab';
 
 export default function DashboardPage() {
   const { user, loading, logout } = useAuth();
@@ -139,6 +140,8 @@ export default function DashboardPage() {
         return <AnalyticsTab {...props} />;
       case 'activity-logs':
         return <ActivityLogsTab {...props} />;
+      case 'profile':
+        return <ProfileTab {...props} />;
       default:
         return <OverviewTab {...props} />;
     }
@@ -147,7 +150,7 @@ export default function DashboardPage() {
   return (
     <div className="flex h-screen bg-surface overflow-hidden">
       {/* Sidebar controls the activeTab state */}
-      <Sidebar role={user.role} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar user={user} role={user.role} activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <div className="flex-1 flex flex-col ml-64">
         {/* Top Header */}
