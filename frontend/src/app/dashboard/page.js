@@ -25,6 +25,7 @@ import AnalyticsTab from '../../components/tabs/AnalyticsTab';
 import ActivityLogsTab from '../../components/tabs/ActivityLogsTab';
 import ProfileTab from '../../components/tabs/ProfileTab';
 import NotificationsTab from '../../components/tabs/NotificationsTab';
+import AssetRequestsTab from '../../components/tabs/AssetRequestsTab';
 
 export default function DashboardPage() {
   const { user, loading: authLoading, logout, updateUser } = useAuth();
@@ -130,6 +131,8 @@ export default function DashboardPage() {
         return <OverviewTab {...props} />;
       case 'assets':
         return <AssetsTab {...props} setActiveTab={setActiveTab} />;
+      case 'asset-requests':
+        return <AssetRequestsTab {...props} />;
       case 'allocations':
         return <AllocationsTab {...props} />;
       case 'transfers':
