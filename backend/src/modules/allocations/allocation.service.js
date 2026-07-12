@@ -209,7 +209,12 @@ export const approveTransfer = async (transferId, approver) => {
       transfer.currentAllocation.assignedToDeptId ||
       transfer.currentAllocation.assignedToUser?.departmentId;
 
-    if (currentDeptId !== approver.departmentId) {
+    // Check if the approver is the head of the currentDeptId
+    const dept = await prisma.department.findFirst({
+      where: { id: currentDeptId, departmentHeadId: approver.id }
+    });
+
+    if (!dept) {
       throw new AppError(
         'Department Heads can only approve transfers within their own department.',
         403
@@ -334,7 +339,11 @@ export const rejectTransfer = async (transferId, rejectionReason, approver) => {
       transfer.currentAllocation.assignedToDeptId ||
       transfer.currentAllocation.assignedToUser?.departmentId;
 
-    if (currentDeptId !== approver.departmentId) {
+    const dept = await prisma.department.findFirst({
+      where: { id: currentDeptId, departmentHeadId: approver.id }
+    });
+
+    if (!dept) {
       throw new AppError(
         'Department Heads can only reject transfers within their own department.',
         403
@@ -374,10 +383,11 @@ export const getAllocations = async (query, user) => {
   if (user.role === 'employee') {
     where.assignedToUserId = user.id;
   } else if (user.role === 'department_head') {
-    // Department head sees department allocations + allocations to dept users
+    // Department head sees their own allocations + allocations to their department + allocations to their dept's users
     where.OR = [
-      { assignedToDeptId: user.departmentId },
-      { assignedToUser: { departmentId: user.departmentId } },
+      { assignedToUserId: user.id },
+      { assignedToDept: { departmentHeadId: user.id } },
+      { assignedToUser: { department: { departmentHeadId: user.id } } },
     ];
   }
   // admin and asset_manager see all
@@ -407,11 +417,13 @@ export const getTransfers = async (query, user) => {
   if (user.role === 'employee') {
     where.requestedByUserId = user.id;
   } else if (user.role === 'department_head') {
-    // Dept head sees transfers involving their department
+    // Dept head sees their own transfers + transfers involving their department
     where.OR = [
       { requestedByUserId: user.id },
-      { targetDeptId: user.departmentId },
-      { currentAllocation: { assignedToDeptId: user.departmentId } },
+      { targetDept: { departmentHeadId: user.id } },
+      { targetUser: { department: { departmentHeadId: user.id } } },
+      { currentAllocation: { assignedToDept: { departmentHeadId: user.id } } },
+      { currentAllocation: { assignedToUser: { department: { departmentHeadId: user.id } } } },
     ];
   }
   // admin and asset_manager see all
