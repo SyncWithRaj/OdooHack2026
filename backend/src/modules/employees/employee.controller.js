@@ -21,8 +21,14 @@ export const getEmployees = catchAsync(async (req, res) => {
 export const updateEmployeeRole = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { role } = req.body;
+  const employeeId = parseInt(id);
+  
+  if (isNaN(employeeId)) {
+    throw new AppError('Invalid employee ID', 400);
+  }
+
   const employee = await employeeService.updateEmployeeRole(
-    parseInt(id),
+    employeeId,
     role,
     req.user.id
   );
@@ -39,7 +45,13 @@ export const updateEmployeeRole = catchAsync(async (req, res) => {
  */
 export const updateEmployee = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const employee = await employeeService.updateEmployee(parseInt(id), req.body);
+  const employeeId = parseInt(id);
+  
+  if (isNaN(employeeId)) {
+    throw new AppError('Invalid employee ID', 400);
+  }
+
+  const employee = await employeeService.updateEmployee(employeeId, req.body);
 
   res.status(200).json({
     success: true,
