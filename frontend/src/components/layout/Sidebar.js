@@ -30,7 +30,7 @@ const getNavigation = (role) => {
     { id: 'audits', name: 'Audits', icon: ClipboardCheck, roles: ['admin', 'asset_manager'] },
     { id: 'analytics', name: 'Analytics & Reports', icon: BarChart3, roles: ['admin', 'asset_manager'] },
     { id: 'activity-logs', name: 'Activity Logs', icon: Activity, roles: ['admin'] },
-    { id: 'notifications', name: 'Notifications', icon: Bell, roles: ['admin'] },
+    { id: 'notifications', name: 'Notifications', icon: Bell, roles: ['admin', 'asset_manager', 'department_head', 'employee'] },
   ];
 
   return routes.filter(route => route.roles.includes(role || 'employee'));
