@@ -22,6 +22,8 @@ import CategoriesTab from '../../components/tabs/CategoriesTab';
 import AuditsTab from '../../components/tabs/AuditsTab';
 import TransfersTab from '../../components/tabs/TransfersTab';
 import BookingsTab from '../../components/tabs/BookingsTab';
+import AnalyticsTab from '../../components/tabs/AnalyticsTab';
+import ActivityLogsTab from '../../components/tabs/ActivityLogsTab';
 
 export default function DashboardPage() {
   const { user, loading, logout } = useAuth();
@@ -133,6 +135,10 @@ export default function DashboardPage() {
         return <CategoriesTab {...props} />;
       case 'audits':
         return <AuditsTab {...props} />;
+      case 'analytics':
+        return <AnalyticsTab {...props} />;
+      case 'activity-logs':
+        return <ActivityLogsTab {...props} />;
       default:
         return <OverviewTab {...props} />;
     }

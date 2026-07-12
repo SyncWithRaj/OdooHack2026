@@ -9,7 +9,9 @@ import {
   Building2,
   Tags,
   ArrowRightLeft,
-  CalendarDays
+  CalendarDays,
+  BarChart3,
+  Activity
 } from 'lucide-react';
 
 const getNavigation = (role) => {
@@ -25,6 +27,8 @@ const getNavigation = (role) => {
     { id: 'departments', name: 'Departments', icon: Building2, roles: ['admin'] },
     { id: 'categories', name: 'Categories', icon: Tags, roles: ['admin'] },
     { id: 'audits', name: 'Audits', icon: ClipboardCheck, roles: ['admin', 'asset_manager'] },
+    { id: 'analytics', name: 'Analytics & Reports', icon: BarChart3, roles: ['admin', 'asset_manager'] },
+    { id: 'activity-logs', name: 'Activity Logs', icon: Activity, roles: ['admin'] },
   ];
 
   return routes.filter(route => route.roles.includes(role || 'employee'));
