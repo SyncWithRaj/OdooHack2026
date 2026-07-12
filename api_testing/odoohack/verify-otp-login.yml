@@ -1,0 +1,18 @@
+info:
+  name: verify-otp-login
+  type: http
+
+http:
+  method: POST
+  url: http:localhost:5000/api/v1/auth/verify-login-otp
+  body:
+    type: json
+    data: '{"email":"rajr127655@gmail.com","otp":"818348"}'
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+​

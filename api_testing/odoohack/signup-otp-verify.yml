@@ -1,0 +1,21 @@
+info:
+  name: signup-otp-verify
+  type: http
+
+http:
+  method: POST
+  url: http://localhost:5000/api/v1/auth/verify-signup-otp
+  body:
+    type: json
+    data: |
+      {
+        "email": "aryansondharva25@gmail.com",
+        "otp": "670490"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

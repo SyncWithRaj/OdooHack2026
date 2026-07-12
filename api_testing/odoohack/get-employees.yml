@@ -1,0 +1,19 @@
+info:
+  name: get-employees
+  type: http
+
+http:
+  method: GET
+  url: http://localhost:5000/api/v1/employees
+  body:
+    type: json
+    data: ""
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgzODMzMzI5LCJleHAiOjE3ODQ0MzgxMjl9.zcUgbUlm7o9MZpfFAhCDTli2m_cMm9Mgi8TN8o6F2GM
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
