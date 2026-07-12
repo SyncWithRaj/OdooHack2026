@@ -27,7 +27,7 @@ import ActivityLogsTab from '../../components/tabs/ActivityLogsTab';
 import ProfileTab from '../../components/tabs/ProfileTab';
 
 export default function DashboardPage() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, updateUser } = useAuth();
   const router = useRouter();
   
   const [activeTab, setActiveTab] = useState('overview');
@@ -141,7 +141,7 @@ export default function DashboardPage() {
       case 'activity-logs':
         return <ActivityLogsTab {...props} />;
       case 'profile':
-        return <ProfileTab {...props} />;
+        return <ProfileTab {...props} updateUser={updateUser} />;
       default:
         return <OverviewTab {...props} />;
     }

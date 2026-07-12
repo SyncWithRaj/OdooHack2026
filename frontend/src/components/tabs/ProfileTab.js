@@ -3,19 +3,64 @@
 import { useState } from 'react';
 import { User, ShieldAlert, Key, Mail, Building2, Briefcase } from 'lucide-react';
 import Button from '../shared/Button';
+import Modal from '../shared/Modal';
+import FormField from '../shared/FormField';
 import toast from 'react-hot-toast';
+import api from '../../utils/api';
 
-export default function ProfileTab({ user }) {
+export default function ProfileTab({ user, updateUser }) {
   const [resetting, setResetting] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [editName, setEditName] = useState(user?.name || '');
+  const [updatingProfile, setUpdatingProfile] = useState(false);
 
-  const handleResetPassword = () => {
-    // In a real app, this would trigger an API call to send a reset link
-    // or open a modal to change the password directly.
-    setResetting(true);
-    setTimeout(() => {
-      toast.success('Password reset link sent to your email.');
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    try {
+      setResetting(true);
+      await api.patch('/auth/change-password', {
+        currentPassword,
+        newPassword
+      });
+      toast.success('Password updated successfully.');
+      setIsChangePasswordOpen(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update password');
+    } finally {
       setResetting(false);
-    }, 1500);
+    }
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    if (!editName.trim()) {
+      toast.error('Name cannot be empty');
+      return;
+    }
+
+    try {
+      setUpdatingProfile(true);
+      const res = await api.patch('/auth/update-profile', { name: editName });
+      updateUser({ name: res.data.data.user.name });
+      toast.success('Profile updated successfully.');
+      setIsEditProfileOpen(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setUpdatingProfile(false);
+    }
   };
 
   return (
@@ -47,6 +92,18 @@ export default function ProfileTab({ user }) {
               <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-accent/10 text-accent border border-accent/20 mx-auto">
                 {user.role.replace('_', ' ')}
               </span>
+            </div>
+            
+            <div className="flex flex-col gap-1 w-full mt-2 border-t border-hairline pt-4">
+              <Button 
+                variant="secondary" 
+                onClick={() => {
+                  setEditName(user.name);
+                  setIsEditProfileOpen(true);
+                }}
+              >
+                Edit Profile
+              </Button>
             </div>
           </div>
         </div>
@@ -96,21 +153,78 @@ export default function ProfileTab({ user }) {
 
             <div className="flex items-center justify-between p-4 bg-white border border-status-lost/10 rounded-md mt-2">
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-ink">Reset Password</span>
-                <span className="text-xs text-steel">Send a secure link to your email to reset your password.</span>
+                <span className="text-sm font-bold text-ink">Change Password</span>
+                <span className="text-xs text-steel">Update your password to keep your account secure.</span>
               </div>
               <Button 
                 variant="destructive" 
-                onClick={handleResetPassword} 
+                onClick={() => setIsChangePasswordOpen(true)} 
                 icon={Key}
-                loading={resetting}
               >
-                Reset Password
+                Change Password
               </Button>
             </div>
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+        title="Change Password"
+      >
+        <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
+          <FormField
+            label="Current Password"
+            id="current-password"
+            type="password"
+            required
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+          />
+          <FormField
+            label="New Password"
+            id="new-password"
+            type="password"
+            required
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <FormField
+            label="Confirm New Password"
+            id="confirm-password"
+            type="password"
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+          <div className="flex justify-end gap-3 mt-4 border-t border-hairline pt-4">
+            <Button variant="ghost" onClick={() => setIsChangePasswordOpen(false)}>Cancel</Button>
+            <Button variant="primary" type="submit" loading={resetting}>Update Password</Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isEditProfileOpen}
+        onClose={() => setIsEditProfileOpen(false)}
+        title="Edit Profile"
+      >
+        <form onSubmit={handleUpdateProfile} className="flex flex-col gap-4">
+          <FormField
+            label="Full Name"
+            id="edit-name"
+            type="text"
+            required
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+          />
+          <div className="flex justify-end gap-3 mt-4 border-t border-hairline pt-4">
+            <Button variant="ghost" onClick={() => setIsEditProfileOpen(false)}>Cancel</Button>
+            <Button variant="primary" type="submit" loading={updatingProfile}>Save Changes</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
