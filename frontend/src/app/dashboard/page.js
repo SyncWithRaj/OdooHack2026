@@ -5,30 +5,24 @@ import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { LogOut, Bell, User as UserIcon } from 'lucide-react';
 
-// Import Sidebar
+// Sidebar
 import Sidebar from '../../components/layout/Sidebar';
 
-// Import Tabs (we will create these next)
+// All tab components
 import OverviewTab from '../../components/tabs/OverviewTab';
+import OrgSetupTab from '../../components/tabs/OrgSetupTab';
 import AssetsTab from '../../components/tabs/AssetsTab';
 import AllocationsTab from '../../components/tabs/AllocationsTab';
+import BookingsTab from '../../components/tabs/BookingsTab';
 import MaintenanceTab from '../../components/tabs/MaintenanceTab';
-import EmployeesTab from '../../components/tabs/EmployeesTab';
-
-// Stub for tabs not yet fully implemented
-const ComingSoonTab = ({ title }) => (
-  <div className="flex flex-col items-center justify-center h-96 bg-white rounded-xl border border-gray-200">
-    <h3 className="text-xl font-medium text-gray-900">{title}</h3>
-    <p className="mt-2 text-gray-500">This module is under construction.</p>
-  </div>
-);
+import AuditTab from '../../components/tabs/AuditTab';
+import ReportsTab from '../../components/tabs/ReportsTab';
+import NotificationsTab from '../../components/tabs/NotificationsTab';
 
 export default function DashboardPage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
-  
-  // Default tab based on role
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -44,29 +38,26 @@ export default function DashboardPage() {
     );
   }
 
-  // Render the correct tab content
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'overview':
+      case 'dashboard':
         return <OverviewTab user={user} />;
+      case 'org-setup':
+        return <OrgSetupTab user={user} />;
       case 'assets':
         return <AssetsTab user={user} />;
       case 'allocations':
         return <AllocationsTab user={user} />;
+      case 'bookings':
+        return <BookingsTab user={user} />;
       case 'maintenance':
         return <MaintenanceTab user={user} />;
-      case 'employees':
-        return <EmployeesTab user={user} />;
-      case 'departments':
-        return <ComingSoonTab title="Departments Management" />;
-      case 'categories':
-        return <ComingSoonTab title="Asset Categories" />;
-      case 'audits':
-        return <ComingSoonTab title="Audit Cycles" />;
-      case 'transfers':
-        return <ComingSoonTab title="Asset Transfers" />;
-      case 'bookings':
-        return <ComingSoonTab title="Resource Bookings" />;
+      case 'audit':
+        return <AuditTab user={user} />;
+      case 'reports':
+        return <ReportsTab user={user} />;
+      case 'notifications':
+        return <NotificationsTab user={user} />;
       default:
         return <OverviewTab user={user} />;
     }
@@ -74,7 +65,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* Sidebar controls the activeTab state */}
       <Sidebar role={user.role} activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <div className="flex-1 flex flex-col ml-64">
@@ -82,11 +72,14 @@ export default function DashboardPage() {
         <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-8 shrink-0">
           <div className="flex-1">
             <h1 className="text-xl font-semibold text-gray-800 capitalize">
-              {activeTab.replace('-', ' ')}
+              {activeTab === 'dashboard' ? 'Dashboard' : activeTab === 'org-setup' ? 'Organization Setup' : activeTab.replace('-', ' ')}
             </h1>
           </div>
           <div className="flex items-center gap-6">
-            <button className="text-gray-400 hover:text-gray-500 relative">
+            <button 
+              onClick={() => setActiveTab('notifications')}
+              className="text-gray-400 hover:text-gray-500 relative"
+            >
               <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white" />
               <Bell className="h-6 w-6" />
             </button>
@@ -110,7 +103,7 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* Dynamic Tab Content Area */}
+        {/* Dynamic Tab Content */}
         <main className="flex-1 overflow-y-auto p-8">
           {renderTabContent()}
         </main>
