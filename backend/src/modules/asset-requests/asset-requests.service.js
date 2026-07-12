@@ -32,19 +32,7 @@ export const createAssetRequest = async (data, requestedByUserId) => {
           referenceType: 'asset_request',
         },
       });
-    } else {
-      // If no dept head, escalate to Asset Manager directly
-      await prisma.assetRequest.update({
-        where: { id: request.id },
-        data: { status: 'pending_asset_manager' },
-      });
     }
-  } else {
-    // If user has no department, escalate to Asset Manager
-    await prisma.assetRequest.update({
-      where: { id: request.id },
-      data: { status: 'pending_asset_manager' },
-    });
   }
 
   return request;
@@ -56,7 +44,10 @@ export const getAssetRequests = async (query, user) => {
   if (user.role === 'employee') {
     where.requestedByUserId = user.id;
   } else if (user.role === 'department_head') {
-    where.requestedBy = { departmentId: user.departmentId };
+    where.OR = [
+      { requestedByUserId: user.id },
+      { requestedBy: { department: { departmentHeadId: user.id } } },
+    ];
   }
 
   const requests = await prisma.assetRequest.findMany({
