@@ -18,6 +18,7 @@ export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets, s
   const [assets, setAssets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hasPendingRequests, setHasPendingRequests] = useState(false);
   
   // Search & Filter state
   const [search, setSearch] = useState('');
@@ -67,8 +68,14 @@ export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets, s
 
       const res = await api.get('/assets', { params });
       setAssets(res.data.data.assets || []);
+      
+      // Check for pending requests for the badge
+      const reqRes = await api.get('/asset-requests');
+      const requestsArray = reqRes.data?.data || [];
+      const pending = requestsArray.some(r => r.status && r.status.startsWith('pending'));
+      setHasPendingRequests(pending);
     } catch (err) {
-      toast.error('Failed to fetch assets directory');
+      toast.error('Failed to load assets');
     } finally {
       setLoading(false);
     }
@@ -302,8 +309,12 @@ export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets, s
           <Button
             variant={viewMode === 'requests' ? "primary" : "secondary"}
             onClick={() => setViewMode(viewMode === 'assets' ? 'requests' : 'assets')}
+            className="relative"
           >
-            {viewMode === 'assets' ? 'View Requests' : 'Back to Directory'}
+            {viewMode === 'assets' ? (['admin', 'asset_manager'].includes(user?.role) ? 'Issue Requests' : 'View Requests') : 'Back to Directory'}
+            {viewMode === 'assets' && hasPendingRequests && (
+              <span className="absolute -top-1 -right-1 block h-3 w-3 rounded-full bg-status-lost ring-2 ring-white" />
+            )}
           </Button>
           {isManager && viewMode === 'assets' && (
             <Button

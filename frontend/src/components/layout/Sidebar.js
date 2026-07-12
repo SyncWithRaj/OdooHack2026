@@ -36,7 +36,7 @@ const getNavigation = (role) => {
   return routes.filter(route => route.roles.includes(role || 'employee'));
 };
 
-export default function Sidebar({ user, role, activeTab, setActiveTab }) {
+export default function Sidebar({ user, role, activeTab, setActiveTab, unreadCount = 0 }) {
   const navigation = getNavigation(role);
 
   return (
@@ -75,7 +75,15 @@ export default function Sidebar({ user, role, activeTab, setActiveTab }) {
                   `}
                   aria-hidden="true"
                 />
-                <span className="truncate">{item.name}</span>
+                <span className="truncate flex-1">{item.name}</span>
+                {item.id === 'notifications' && unreadCount > 0 && (
+                  <span className={`
+                    ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full
+                    ${isActive ? 'bg-white/20 text-accent-ink' : 'bg-status-lost text-white'}
+                  `}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </button>
             );
           })}

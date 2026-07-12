@@ -161,7 +161,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen bg-surface overflow-hidden">
-      <Sidebar user={user} role={user.role} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar user={user} role={user.role} activeTab={activeTab} setActiveTab={setActiveTab} unreadCount={unreadCount} />
       
       <div className="flex-1 flex flex-col ml-64">
         <header className="bg-white border-b border-hairline h-16 flex items-center justify-between px-8 shrink-0 relative z-40">

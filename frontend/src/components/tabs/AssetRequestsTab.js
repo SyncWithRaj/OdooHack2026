@@ -189,7 +189,7 @@ export default function AssetRequestsTab({ user }) {
                 icon={Check}
                 className="!p-1.5 !px-3 text-xs"
               >
-                Approve
+                {canApproveMgr ? 'Issue' : 'Approve'}
               </Button>
               <Button
                 variant="destructive"
@@ -216,7 +216,9 @@ export default function AssetRequestsTab({ user }) {
       {/* Title Header */}
       <div className="sm:flex sm:items-center sm:justify-between border-b border-hairline pb-4">
         <div>
-          <h2 className="text-2xl font-bold font-display text-ink uppercase tracking-wider">Asset Requests</h2>
+          <h2 className="text-2xl font-bold font-display text-ink uppercase tracking-wider">
+            {['admin', 'asset_manager'].includes(user?.role) ? 'Issue Requests' : 'Asset Requests'}
+          </h2>
           <p className="mt-1 text-sm text-steel">
             View and manage employee requests for new assets.
           </p>
