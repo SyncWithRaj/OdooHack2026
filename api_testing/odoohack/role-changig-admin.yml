@@ -1,0 +1,19 @@
+info:
+  name: role-changig-admin
+  type: http
+
+http:
+  method: PATCH
+  url: http://localhost:5000/api/v1/employees/2/role
+  body:
+    type: json
+    data: '{"role":"asset_manager"}'
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgzODM0MDkyLCJleHAiOjE3ODQ0Mzg4OTJ9.-Cuh999EMeKX07xmiFWExGiB_vwa6O2rIQV2N9LJdLI
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
