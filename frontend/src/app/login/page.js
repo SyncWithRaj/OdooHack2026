@@ -6,6 +6,7 @@ import Link from 'next/link';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 import { Mail, Lock, Loader2, ArrowRight, ShieldAlert, KeyRound, QrCode } from 'lucide-react';
+import { motion } from 'framer-motion';
 import FormField from '../../components/shared/FormField';
 import Button from '../../components/shared/Button';
 
@@ -117,7 +118,7 @@ export default function LoginPage() {
             </div>
             <div>
               <h4 className="text-base font-bold font-display uppercase tracking-wider text-white">Statically Tagged Lifecycle</h4>
-              <p className="text-sm text-steel mt-1">
+              <p className="text-sm text-white/60 mt-1">
                 Every physical resource maps back to a unique, stamped tracking code and barcode. Check histories in real time.
               </p>
             </div>
@@ -129,7 +130,7 @@ export default function LoginPage() {
             </div>
             <div>
               <h4 className="text-base font-bold font-display uppercase tracking-wider text-white">Interactive Allocation Flow</h4>
-              <p className="text-sm text-steel mt-1">
+              <p className="text-sm text-white/60 mt-1">
                 Allocate hardware to departments, handle return check-ins, or request ownership transfers with validation.
               </p>
             </div>
@@ -137,7 +138,7 @@ export default function LoginPage() {
         </div>
 
         {/* Bottom Metadata Stamp */}
-        <div className="flex items-center justify-between text-[10px] text-steel font-mono tracking-wider uppercase border-t border-hairline/10 pt-6 relative z-10">
+        <div className="flex items-center justify-between text-[10px] text-white/40 font-mono tracking-wider uppercase border-t border-hairline/10 pt-6 relative z-10">
           <span>Enterprise Asset ERP Module</span>
           <span>v1.2.0</span>
         </div>
@@ -145,7 +146,12 @@ export default function LoginPage() {
 
       {/* Right panel: Form views */}
       <div className="flex-1 flex items-center justify-center p-8 bg-surface">
-        <div className="w-full max-w-md bg-white border border-hairline rounded-lg p-8 shadow-sm relative">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.97, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="w-full max-w-md bg-white border border-hairline rounded-lg p-8 shadow-sm relative"
+        >
           
           {/* Accent Notched Corner Details */}
           <div className="absolute top-0 right-0 w-3 h-3 bg-accent rounded-bl-[4px]" />
@@ -322,7 +328,7 @@ export default function LoginPage() {
             </div>
           )}
 
-        </div>
+        </motion.div>
       </div>
 
     </div>

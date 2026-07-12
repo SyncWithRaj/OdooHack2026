@@ -1,45 +1,92 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Space+Grotesk:wght@300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Space+Grotesk:wght@300..700&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @import "tailwindcss";
 
 :root {
-  --background: #FAFAF9; /* --surface */
-  --foreground: #1B2429; /* --ink */
+  --background: #F8F9FA;
+  --foreground: #0F172A;
 }
 
 @theme {
-  --font-sans: 'IBM Plex Sans', sans-serif;
+  --font-sans: 'Inter', 'IBM Plex Sans', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
   --font-display: 'Space Grotesk', sans-serif;
 
-  --color-ink: #1B2429;
-  --color-steel: #5B6B73;
-  --color-surface: #FAFAF9;
+  --color-ink: #0F172A;
+  --color-steel: #475569;
+  --color-surface: #F8F9FA;
   --color-surface-raised: #FFFFFF;
-  --color-hairline: #E4E2DD;
-  --color-accent: #E8A33D;
-  --color-accent-ink: #5C3B0E;
+  --color-hairline: #E2E8F0;
+  --color-accent: #3B82F6;
+  --color-accent-ink: #1E3A8A;
+  
+  --color-brand-orange: #F97316;
+  --color-brand-orange-ink: #7C2D12;
 
-  --color-status-available: #2E9B5F;
-  --color-status-allocated: #3B7DD8;
+  --color-status-available: #10B981;
+  --color-status-allocated: #3B82F6;
   --color-status-reserved: #8B5CF6;
-  --color-status-maintenance: #E8A33D;
-  --color-status-lost: #D64545;
-  --color-status-retired: #8A8F94;
-  --color-status-disposed: #4B4F53;
+  --color-status-maintenance: #F59E0B;
+  --color-status-lost: #EF4444;
+  --color-status-retired: #64748B;
+  --color-status-disposed: #334155;
 }
 
 body {
   background-color: var(--color-surface);
   color: var(--color-ink);
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: 'Inter', 'IBM Plex Sans', sans-serif;
   min-height: 100vh;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4, .font-display {
   font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: -0.02em;
 }
 
 .mono-tag {
   font-family: 'IBM Plex Mono', monospace;
 }
+
+/* Custom premium scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Premium utility styles */
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.premium-shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05), 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.premium-card-hover {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.05), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+

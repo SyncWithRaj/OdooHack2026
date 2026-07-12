@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import EmptyState from './EmptyState';
 
 export default function DataTable({
@@ -55,8 +56,8 @@ export default function DataTable({
       if (bVal === null || bVal === undefined) return -1;
       
       const comparison = typeof aVal === 'string' 
-        ? aVal.localeCompare(bVal) 
-        : aVal - bVal;
+          ? aVal.localeCompare(bVal) 
+          : aVal - bVal;
         
       return sortOrder === 'asc' ? comparison : -comparison;
     });
@@ -95,9 +96,9 @@ export default function DataTable({
             {loading ? (
               <tr>
                 <td colSpan={columns.length} className="px-6 py-12 text-center">
-                  <div className="inline-flex items-center justify-center gap-2 text-sm text-steel">
-                    <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                    <span>Loading data...</span>
+                  <div className="inline-flex items-center justify-center gap-2.5 text-sm text-steel">
+                    <div className="w-5 h-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+                    <span>Loading details...</span>
                   </div>
                 </td>
               </tr>
@@ -115,18 +116,24 @@ export default function DataTable({
                 </td>
               </tr>
             ) : (
-              sortedData.map((row, rowIdx) => (
-                <tr 
-                  key={row.id || rowIdx} 
-                  className="hover:bg-surface/50 transition-colors duration-150"
-                >
-                  {columns.map((col) => (
-                    <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-ink font-sans">
-                      {col.render ? col.render(row) : row[col.key] ?? '—'}
-                    </td>
-                  ))}
-                </tr>
-              ))
+              <AnimatePresence mode="popLayout">
+                {sortedData.map((row, rowIdx) => (
+                  <motion.tr 
+                    key={row.id || rowIdx} 
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.18, delay: Math.min(rowIdx * 0.025, 0.25) }}
+                    className="hover:bg-surface/50 transition-colors duration-150"
+                  >
+                    {columns.map((col) => (
+                      <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-ink font-sans">
+                        {col.render ? col.render(row) : row[col.key] ?? '—'}
+                      </td>
+                    ))}
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
             )}
           </tbody>
         </table>

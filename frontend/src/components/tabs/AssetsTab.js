@@ -12,6 +12,7 @@ import Modal from '../shared/Modal';
 import DataTable from '../shared/DataTable';
 import Timeline from '../shared/Timeline';
 import AssetRequestsTab from './AssetRequestsTab';
+import WorkflowPipeline from '../shared/WorkflowPipeline';
 
 export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets, setActiveTab }) {
   const [viewMode, setViewMode] = useState('assets'); // 'assets' or 'requests'
@@ -316,6 +317,14 @@ export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets, s
           )}
         </div>
       </div>
+
+      {viewMode === 'assets' && (
+        <WorkflowPipeline 
+          assets={assets}
+          selectedStatus={selectedStatus}
+          onSelectStatus={setSelectedStatus}
+        />
+      )}
 
       {viewMode === 'requests' ? (
         <div className="-mt-4">

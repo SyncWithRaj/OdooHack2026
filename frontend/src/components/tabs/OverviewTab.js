@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import api from '../../utils/api';
 import { Package, ArrowRightLeft, Wrench, CalendarCheck, AlertTriangle, Plus, Clipboard, UserMinus, TrendingUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import KPICard from '../shared/KPICard';
 import AssetTagChip from '../shared/AssetTagChip';
 import StatusBadge from '../shared/StatusBadge';
@@ -260,15 +261,22 @@ export default function OverviewTab({ user, setActiveTab }) {
       </div>
 
       {/* Overdue Returns Panel - Visually Separated */}
-      {overdueAllocations.length > 0 && (
-        <div className="bg-status-lost/5 border border-status-lost/30 rounded-lg p-6 flex flex-col gap-4 animate-in fade-in duration-200">
-          <div className="flex items-center gap-2 text-status-lost">
-            <AlertTriangle className="w-5 h-5" />
-            <h3 className="text-sm font-bold uppercase tracking-wider font-display">Attention: Overdue Asset Returns</h3>
-          </div>
-          <p className="text-xs text-steel -mt-2">
-            The following assets have exceeded their expected return date. Please return or re-allocate them immediately.
-          </p>
+      <AnimatePresence>
+        {overdueAllocations.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0, y: -10 }}
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -10 }}
+            transition={{ duration: 0.25 }}
+            className="bg-status-lost/5 border border-status-lost/30 rounded-lg p-6 flex flex-col gap-4 overflow-hidden shadow-sm"
+          >
+            <div className="flex items-center gap-2 text-status-lost">
+              <AlertTriangle className="w-5 h-5" />
+              <h3 className="text-sm font-bold uppercase tracking-wider font-display">Attention: Overdue Asset Returns</h3>
+            </div>
+            <p className="text-xs text-steel -mt-2">
+              The following assets have exceeded their expected return date. Please return or re-allocate them immediately.
+            </p>
 
           <div className="bg-white border border-hairline rounded-md overflow-hidden">
             <div className="overflow-x-auto">
@@ -332,14 +340,20 @@ export default function OverviewTab({ user, setActiveTab }) {
               </table>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
+    </AnimatePresence>
 
       {/* Calendar and Charts Interactive Section */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         
         {/* Left Column: Interactive Custom Calendar */}
-        <div className="flex flex-col gap-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.1 }}
+          className="flex flex-col gap-4"
+        >
           <div className="flex items-center gap-2 text-ink">
             <CalendarCheck className="w-5 h-5 text-accent" />
             <h3 className="text-lg font-bold font-display uppercase tracking-wider">Operational Calendar</h3>
@@ -353,10 +367,15 @@ export default function OverviewTab({ user, setActiveTab }) {
               onEventClick={(tab) => setActiveTab(tab)}
             />
           </div>
-        </div>
+        </motion.div>
 
         {/* Right Column: Interactive Multi-Select Charts */}
-        <div className="flex flex-col gap-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.15 }}
+          className="flex flex-col gap-4"
+        >
           <div className="flex items-center justify-between border-b border-hairline pb-2">
             <div className="flex items-center gap-2 text-ink">
               <TrendingUp className="w-5 h-5 text-accent" />
@@ -481,7 +500,7 @@ export default function OverviewTab({ user, setActiveTab }) {
               )}
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Quick Actions Panel */}
@@ -489,9 +508,11 @@ export default function OverviewTab({ user, setActiveTab }) {
         <h3 className="text-sm font-bold uppercase tracking-wider text-steel">Quick Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {isManager && (
-            <button
+            <motion.button
+              whileHover={{ y: -3, borderColor: 'var(--color-accent)' }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setActiveTab('assets')}
-              className="flex items-center gap-4 p-4 border border-hairline rounded-lg text-left hover:border-accent hover:bg-surface/50 transition-all duration-200 group"
+              className="flex items-center gap-4 p-4 border border-hairline rounded-lg text-left hover:bg-surface/50 transition-all duration-200 group cursor-pointer shadow-sm"
             >
               <div className="p-3 rounded bg-accent/10 border border-accent/20 text-accent group-hover:bg-accent group-hover:text-accent-ink transition-colors">
                 <Plus className="w-5 h-5" />
@@ -500,12 +521,14 @@ export default function OverviewTab({ user, setActiveTab }) {
                 <p className="text-sm font-bold text-ink uppercase tracking-wider">Register Asset</p>
                 <p className="text-xs text-steel">Add new hardware/software to database</p>
               </div>
-            </button>
+            </motion.button>
           )}
 
-          <button
+          <motion.button
+            whileHover={{ y: -3, borderColor: 'var(--color-accent)' }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setActiveTab('bookings')}
-            className="flex items-center gap-4 p-4 border border-hairline rounded-lg text-left hover:border-accent hover:bg-surface/50 transition-all duration-200 group"
+            className="flex items-center gap-4 p-4 border border-hairline rounded-lg text-left hover:bg-surface/50 transition-all duration-200 group cursor-pointer shadow-sm"
           >
             <div className="p-3 rounded bg-accent/10 border border-accent/20 text-accent group-hover:bg-accent group-hover:text-accent-ink transition-colors">
               <CalendarCheck className="w-5 h-5" />
@@ -514,11 +537,13 @@ export default function OverviewTab({ user, setActiveTab }) {
               <p className="text-sm font-bold text-ink uppercase tracking-wider">Book Resource</p>
               <p className="text-xs text-steel">Reserve workspaces, rooms, or vehicles</p>
             </div>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ y: -3, borderColor: 'var(--color-accent)' }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setIsMaintenanceModalOpen(true)}
-            className="flex items-center gap-4 p-4 border border-hairline rounded-lg text-left hover:border-accent hover:bg-surface/50 transition-all duration-200 group"
+            className="flex items-center gap-4 p-4 border border-hairline rounded-lg text-left hover:bg-surface/50 transition-all duration-200 group cursor-pointer shadow-sm"
           >
             <div className="p-3 rounded bg-accent/10 border border-accent/20 text-accent group-hover:bg-accent group-hover:text-accent-ink transition-colors">
               <Wrench className="w-5 h-5" />
@@ -527,7 +552,7 @@ export default function OverviewTab({ user, setActiveTab }) {
               <p className="text-sm font-bold text-ink uppercase tracking-wider">Raise Maintenance</p>
               <p className="text-xs text-steel">Report a broken asset or request upkeep</p>
             </div>
-          </button>
+          </motion.button>
         </div>
       </div>
 
