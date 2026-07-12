@@ -73,17 +73,19 @@ export default function OverviewTab({ user, setActiveTab }) {
       setAssets(assetsRes.data.data.assets || []);
 
       // Fetch Analytics Data for charts
-      const [utilRes, maintFreqRes, deptRes] = await Promise.all([
-        api.get('/analytics/utilization'),
-        api.get('/analytics/maintenance-frequency'),
-        api.get('/analytics/department-summary')
-      ]);
-
-      setAnalyticsData({
-        utilization: utilRes.data.data.utilization || [],
-        maintenanceFreq: maintFreqRes.data.data.frequency || [],
-        deptSummary: deptRes.data.data.summary || []
-      });
+      if (['admin', 'asset_manager'].includes(user?.role)) {
+        const [utilRes, maintFreqRes, deptRes] = await Promise.all([
+          api.get('/analytics/utilization'),
+          api.get('/analytics/maintenance-frequency'),
+          api.get('/analytics/department-summary')
+        ]);
+  
+        setAnalyticsData({
+          utilization: utilRes.data.data.utilization || [],
+          maintenanceFreq: maintFreqRes.data.data.maintenanceFrequency || [],
+          deptSummary: deptRes.data.data.departmentSummary || []
+        });
+      }
 
     } catch (err) {
       console.error('Failed to load dashboard data', err);

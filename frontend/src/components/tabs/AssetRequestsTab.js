@@ -3,13 +3,13 @@
 import { useEffect, useState } from 'react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
-import { Plus, Search, RefreshCw, Check, X, Package } from 'lucide-react';
+import { Plus, Search, RefreshCw, Check, X, Package, ArrowLeft } from 'lucide-react';
 import Button from '../shared/Button';
 import FormField from '../shared/FormField';
 import Modal from '../shared/Modal';
 import DataTable from '../shared/DataTable';
 
-export default function AssetRequestsTab({ user }) {
+export default function AssetRequestsTab({ user, setActiveTab }) {
   const [requests, setRequests] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -189,7 +189,7 @@ export default function AssetRequestsTab({ user }) {
                 icon={Check}
                 className="!p-1.5 !px-3 text-xs"
               >
-                Approve
+                {canApproveMgr ? 'Issue' : 'Approve'}
               </Button>
               <Button
                 variant="destructive"
@@ -216,12 +216,23 @@ export default function AssetRequestsTab({ user }) {
       {/* Title Header */}
       <div className="sm:flex sm:items-center sm:justify-between border-b border-hairline pb-4">
         <div>
-          <h2 className="text-2xl font-bold font-display text-ink uppercase tracking-wider">Asset Requests</h2>
+          <h2 className="text-2xl font-bold font-display text-ink uppercase tracking-wider">
+            {['admin', 'asset_manager'].includes(user?.role) ? 'Issue Requests' : 'Asset Requests'}
+          </h2>
           <p className="mt-1 text-sm text-steel">
             View and manage employee requests for new assets.
           </p>
         </div>
         <div className="mt-4 sm:mt-0 flex gap-2">
+          {setActiveTab && (
+            <Button 
+              variant="secondary"
+              onClick={() => setActiveTab('assets')}
+              icon={ArrowLeft}
+            >
+              Back to Assets
+            </Button>
+          )}
           <Button 
             variant="secondary"
             onClick={() => fetchData()}

@@ -12,7 +12,8 @@ import {
   CalendarDays,
   BarChart3,
   Activity,
-  User as UserIcon
+  User as UserIcon,
+  Bell
 } from 'lucide-react';
 
 const getNavigation = (role) => {
@@ -29,12 +30,13 @@ const getNavigation = (role) => {
     { id: 'audits', name: 'Audits', icon: ClipboardCheck, roles: ['admin', 'asset_manager'] },
     { id: 'analytics', name: 'Analytics & Reports', icon: BarChart3, roles: ['admin', 'asset_manager'] },
     { id: 'activity-logs', name: 'Activity Logs', icon: Activity, roles: ['admin'] },
+    { id: 'notifications', name: 'Notifications', icon: Bell, roles: ['admin', 'asset_manager', 'department_head', 'employee'] },
   ];
 
   return routes.filter(route => route.roles.includes(role || 'employee'));
 };
 
-export default function Sidebar({ user, role, activeTab, setActiveTab }) {
+export default function Sidebar({ user, role, activeTab, setActiveTab, unreadCount = 0 }) {
   const navigation = getNavigation(role);
 
   return (
@@ -73,7 +75,15 @@ export default function Sidebar({ user, role, activeTab, setActiveTab }) {
                   `}
                   aria-hidden="true"
                 />
-                <span className="truncate">{item.name}</span>
+                <span className="truncate flex-1">{item.name}</span>
+                {item.id === 'notifications' && unreadCount > 0 && (
+                  <span className={`
+                    ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full
+                    ${isActive ? 'bg-white/20 text-accent-ink' : 'bg-status-lost text-white'}
+                  `}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </button>
             );
           })}

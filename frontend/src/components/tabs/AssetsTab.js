@@ -14,10 +14,16 @@ import Timeline from '../shared/Timeline';
 import AssetRequestsTab from './AssetRequestsTab';
 
 export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets, setActiveTab }) {
-  const [viewMode, setViewMode] = useState('assets'); // 'assets' or 'requests'
   const [assets, setAssets] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hasPendingRequests, setHasPendingRequests] = useState(false);
+  
+  // Request Modal state
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [reqCategoryId, setReqCategoryId] = useState('');
+  const [reqJustification, setReqJustification] = useState('');
+  const [submittingRequest, setSubmittingRequest] = useState(false);
   
   // Search & Filter state
   const [search, setSearch] = useState('');
@@ -67,8 +73,14 @@ export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets, s
 
       const res = await api.get('/assets', { params });
       setAssets(res.data.data.assets || []);
+      
+      // Check for pending requests for the badge
+      const reqRes = await api.get('/asset-requests');
+      const requestsArray = reqRes.data?.data || [];
+      const pending = requestsArray.some(r => r.status && r.status.startsWith('pending'));
+      setHasPendingRequests(pending);
     } catch (err) {
-      toast.error('Failed to fetch assets directory');
+      toast.error('Failed to load assets');
     } finally {
       setLoading(false);
     }
@@ -196,6 +208,32 @@ export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets, s
     setIsEditModalOpen(true);
   };
 
+  const handleRequestSubmit = async (e) => {
+    e.preventDefault();
+    if (!reqCategoryId || !reqJustification) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    try {
+      setSubmittingRequest(true);
+      await api.post('/asset-requests', {
+        categoryId: parseInt(reqCategoryId),
+        justification: reqJustification
+      });
+      toast.success('Asset requested successfully');
+      setIsRequestModalOpen(false);
+      setReqCategoryId('');
+      setReqJustification('');
+      // Refresh pending badge
+      fetchAssets();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit request');
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
+
   const isManager = ['admin', 'asset_manager'].includes(user?.role);
 
   // DataTable columns
@@ -300,12 +338,25 @@ export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets, s
             Refresh
           </Button>
           <Button
-            variant={viewMode === 'requests' ? "primary" : "secondary"}
-            onClick={() => setViewMode(viewMode === 'assets' ? 'requests' : 'assets')}
+            variant="secondary"
+            onClick={() => setActiveTab('asset-requests')}
+            className="relative"
           >
-            {viewMode === 'assets' ? 'View Requests' : 'Back to Directory'}
+            {['admin', 'asset_manager'].includes(user?.role) ? 'Issue Requests' : 'View Requests'}
+            {hasPendingRequests && (
+              <span className="absolute -top-1 -right-1 block h-3 w-3 rounded-full bg-status-lost ring-2 ring-white" />
+            )}
           </Button>
-          {isManager && viewMode === 'assets' && (
+          {['employee', 'department_head'].includes(user?.role) && (
+            <Button
+              variant="primary"
+              onClick={() => setIsRequestModalOpen(true)}
+              icon={Plus}
+            >
+              Request New Asset
+            </Button>
+          )}
+          {isManager && (
             <Button
               variant="primary"
               onClick={() => setIsRegisterModalOpen(true)}
@@ -317,12 +368,7 @@ export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets, s
         </div>
       </div>
 
-      {viewMode === 'requests' ? (
-        <div className="-mt-4">
-          <AssetRequestsTab user={user} assetsTriggerRefresh={assetsTriggerRefresh} refreshAssets={refreshAssets} setActiveTab={setActiveTab} />
-        </div>
-      ) : (
-        <>
+
           {/* Toolbar / Filters */}
       <div className="flex flex-col gap-4 p-4 bg-white border border-hairline rounded-lg shadow-sm">
         <div className="flex gap-3">
@@ -678,8 +724,54 @@ export default function AssetsTab({ user, assetsTriggerRefresh, refreshAssets, s
           </div>
         )}
       </Modal>
-        </>
-      )}
+      {/* Request New Asset Modal */}
+      <Modal
+        isOpen={isRequestModalOpen}
+        onClose={() => {
+          setIsRequestModalOpen(false);
+          setReqCategoryId('');
+          setReqJustification('');
+        }}
+        title="Request New Asset"
+      >
+        <form onSubmit={handleRequestSubmit} className="flex flex-col gap-4">
+          <FormField
+            label="Asset Category"
+            id="req-category"
+            type="select"
+            required
+            value={reqCategoryId}
+            onChange={(e) => setReqCategoryId(e.target.value)}
+          >
+            <option value="">Select Category...</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </FormField>
+
+          <FormField
+            label="Justification"
+            id="req-justification"
+            type="textarea"
+            required
+            placeholder="Why do you need this asset?"
+            value={reqJustification}
+            onChange={(e) => setReqJustification(e.target.value)}
+          />
+
+          <div className="flex justify-end gap-3 mt-4 border-t border-hairline pt-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => setIsRequestModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" loading={submittingRequest}>Submit Request</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

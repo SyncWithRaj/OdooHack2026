@@ -85,12 +85,16 @@ async function main() {
   // 6. Allocations
   let allocations = [];
   for (let i = 0; i < 6; i++) {
+    const expected = new Date();
+    expected.setDate(expected.getDate() + (i === 0 ? -5 : 5)); // First one is overdue
+
     const alloc = await prisma.allocation.create({
       data: {
         assetId: assets[i].id,
         assignedToUserId: normalUser.id,
         allocatedById: adminUser.id,
-        status: 'active'
+        status: 'active',
+        expectedReturnDate: expected
       }
     });
     allocations.push(alloc);
@@ -126,7 +130,7 @@ async function main() {
         userId: normalUser.id,
         startTime: start,
         endTime: end,
-        status: 'pending'
+        status: i === 0 ? 'ongoing' : (i === 1 ? 'upcoming' : 'pending')
       }
     });
   }
@@ -139,8 +143,9 @@ async function main() {
         assetId: assets[i].id,
         raisedById: normalUser.id,
         description: `Routine checkup ${i}`,
-        priority: 'medium',
-        status: 'pending'
+        priority: i === 0 ? 'high' : 'medium',
+        status: i < 2 ? 'in_progress' : (i === 2 ? 'approved' : 'pending'),
+        startDate: i < 3 ? new Date() : null
       }
     });
   }

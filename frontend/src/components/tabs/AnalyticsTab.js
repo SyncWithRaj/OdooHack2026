@@ -30,8 +30,8 @@ export default function AnalyticsTab({ user }) {
 
       setKpis(kpiRes.data.data.kpis);
       setUtilization(utilRes.data.data.utilization || []);
-      setMaintenanceFreq(maintRes.data.data.frequency || []);
-      setDeptSummary(deptRes.data.data.summary || []);
+      setMaintenanceFreq(maintRes.data.data.maintenanceFrequency || []);
+      setDeptSummary(deptRes.data.data.departmentSummary || []);
       setHeatmap(heatRes.data.data.heatmap || {});
     } catch (err) {
       toast.error('Failed to load analytics data');

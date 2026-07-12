@@ -24,6 +24,8 @@ import BookingsTab from '../../components/tabs/BookingsTab';
 import AnalyticsTab from '../../components/tabs/AnalyticsTab';
 import ActivityLogsTab from '../../components/tabs/ActivityLogsTab';
 import ProfileTab from '../../components/tabs/ProfileTab';
+import NotificationsTab from '../../components/tabs/NotificationsTab';
+import AssetRequestsTab from '../../components/tabs/AssetRequestsTab';
 
 export default function DashboardPage() {
   const { user, loading: authLoading, logout, updateUser } = useAuth();
@@ -48,7 +50,7 @@ export default function DashboardPage() {
       let fetchedNotifs = res.data.data.notifications || [];
       
       // If no real notifications, fallback to recent 10 activity logs for the UI
-      if (fetchedNotifs.length === 0) {
+      if (fetchedNotifs.length === 0 && user?.role === 'admin') {
         const logsRes = await api.get('/analytics/logs', { params: { limit: 10 } });
         fetchedNotifs = (logsRes.data.data.logs || []).map(log => ({
           id: `log-${log.id}`,
@@ -129,6 +131,8 @@ export default function DashboardPage() {
         return <OverviewTab {...props} />;
       case 'assets':
         return <AssetsTab {...props} setActiveTab={setActiveTab} />;
+      case 'asset-requests':
+        return <AssetRequestsTab {...props} />;
       case 'allocations':
         return <AllocationsTab {...props} />;
       case 'transfers':
@@ -149,6 +153,8 @@ export default function DashboardPage() {
         return <AnalyticsTab {...props} />;
       case 'activity-logs':
         return <ActivityLogsTab {...props} />;
+      case 'notifications':
+        return <NotificationsTab {...props} />;
       case 'profile':
         return <ProfileTab {...props} updateUser={updateUser} />;
       default:
@@ -158,7 +164,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen bg-surface overflow-hidden">
-      <Sidebar user={user} role={user.role} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar user={user} role={user.role} activeTab={activeTab} setActiveTab={setActiveTab} unreadCount={unreadCount} />
       
       <div className="flex-1 flex flex-col ml-64">
         <header className="bg-white border-b border-hairline h-16 flex items-center justify-between px-8 shrink-0 relative z-40">
