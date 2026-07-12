@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, 
   Package, 
@@ -60,20 +61,27 @@ export default function Sidebar({ user, role, activeTab, setActiveTab }) {
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`
-                  w-full group flex items-center px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-md transition-all duration-150 text-left
+                  w-full group flex items-center px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-md relative text-left transition-colors duration-200
                   ${isActive 
-                    ? 'bg-accent text-accent-ink shadow-md' 
-                    : 'text-steel hover:text-white hover:bg-white/5'}
+                    ? 'text-accent-ink font-bold' 
+                    : 'text-white/60 hover:text-white'}
                 `}
               >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTabPill"
+                    className="absolute inset-0 bg-accent rounded-md"
+                    transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                  />
+                )}
                 <item.icon
                   className={`
-                    flex-shrink-0 mr-3 h-4.5 w-4.5 transition-colors
-                    ${isActive ? 'text-accent-ink' : 'text-steel group-hover:text-white'}
+                    flex-shrink-0 mr-3 h-4.5 w-4.5 transition-colors relative z-10
+                    ${isActive ? 'text-accent-ink' : 'text-white/60 group-hover:text-white'}
                   `}
                   aria-hidden="true"
                 />
-                <span className="truncate">{item.name}</span>
+                <span className="truncate relative z-10">{item.name}</span>
               </button>
             );
           })}
@@ -84,14 +92,14 @@ export default function Sidebar({ user, role, activeTab, setActiveTab }) {
       <div className="p-4 border-t border-hairline/15 bg-white/5">
         <button
           onClick={() => setActiveTab('profile')}
-          className={`w-full flex items-center gap-3 p-2 rounded-md transition-colors text-left hover:bg-white/10 ${activeTab === 'profile' ? 'bg-white/10 ring-1 ring-accent/50' : ''}`}
+          className={`w-full flex items-center gap-3 p-2 rounded-md transition-all duration-200 text-left hover:bg-white/10 ${activeTab === 'profile' ? 'bg-white/10 ring-1 ring-accent/50' : ''}`}
         >
           <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 text-accent">
             <UserIcon className="w-4 h-4" />
           </div>
           <div className="flex flex-col overflow-hidden">
             <span className="text-sm font-bold text-white truncate">{user?.name || 'User'}</span>
-            <span className="text-[10px] text-steel font-semibold tracking-wider uppercase truncate">
+            <span className="text-[10px] text-white/50 font-semibold tracking-wider uppercase truncate">
               {user?.role?.replace('_', ' ') || 'Role'}
             </span>
           </div>
